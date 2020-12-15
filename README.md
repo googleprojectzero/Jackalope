@@ -36,7 +36,7 @@ Jackalope can be used stand-alone, but is more powerful when used as a library, 
  - A simple set of generic mutators
  - Sample delivery via file or via shared memory
 
-TinyInst can be run in parallel
+Jackalope can be run in parallel
  - On a single machine: by passing the number of fuzzing threads via `-nthreads` command line parameter
  - Across multiple machines: By running one instance as a server (`-start_server` command line flag) and having fuzzers on the worker machines connect to this server (`-server` command line flag). The server then collects and distributes samples, crashes and coverage across the workers.
 
@@ -120,7 +120,7 @@ Jackalope consists of the following main classes:
 
 `SampleDelivery` - Handles passing a sample to the target. The fuzzer comes bundled with sample delivery via file and via shared memory.
 
-`PRNG` - Pseudorandom number generator. By defauly, TinyInst uses PRNG based on Mersenne twister.
+`PRNG` - Pseudorandom number generator. By defauly, Jackalope uses PRNG based on Mersenne twister.
 
 `Server` - Implements server components of the fuzzr. The server is responsible for collecting coverage from clients as well as samples that trigger new coverage. The server then distributes those samples to other fuzzer processes.
 
