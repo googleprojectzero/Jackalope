@@ -130,7 +130,7 @@ Jackalope consists of the following main classes:
 
 The "intended" way to customize the fuzzer is to subclass the `Fuzzer` class and override the relevant methods. See [main.cpp](https://github.com/googleprojectzero/Jackalope/blob/main/main.cpp) for a simple example. The methods that can be overriden are:
 
-`CreateMutator()` - Creates a mutator configuration for the fuzzer. For an example, see https://github.com/googleprojectzero/Jackalope/blob/main/main.cpp#L9
+`CreateMutator()` - Creates a mutator configuration for the fuzzer. For an example, see https://github.com/googleprojectzero/Jackalope/blob/main/main.cpp#L25
 
 `OutputFilter()` - Can modify a sample before passing it to the target, for example to fix the header or checksums. The default implementation will pass the sample as is.
 
