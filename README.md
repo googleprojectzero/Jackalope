@@ -106,6 +106,8 @@ Example (Windows):
 fuzzer.exe -in in -out out -t 1000 -delivery shmem -instrument_module test.exe -target_module test.exe -target_method fuzz -nargs 1 -iterations 10000 -persist -loop -cmp_coverage -- test.exe -m @@
 ```
 
+Explanation: This runs the fuzzer using "in" as input directory and "out" as output directory. Samples are delivered via shared memory without writing to disk (`-delivery shmem`). Coverage is collected from the `test` / `test.exe` module (`-instrument_module` flag). The target is run in persistent mode with function `fuzz()` from `test` / `test.exe` module being run in a loop. This function takes 1 argument and will be run in the loop for maximum of 10000 iterations before restarting the target process. Compare coverage is used (`-cmp_coverage` flag) in order to bruteforce through multi-byte comparisons easily. `test.exe -m @@` is the target command line where @@ gets replaced with the shared memory name (it would be replaced with the filename if `-delivery shmem` wasn't used).
+
 ## Architecture
 
 Jackalope consists of the following main classes:
