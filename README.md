@@ -67,6 +67,8 @@ cmake --build . --config Release
 
 The generator arguments depend on your environmaent. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`.
 
+Getting `No CMAKE_C_COMPILER could be found` error on macOS? Try updating cmake. Also make sure Xcode is installed and you ran it at least once (it installs some components on 1st run).
+
 ## Running Jackalope
 
 Usage:
