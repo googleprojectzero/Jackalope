@@ -147,6 +147,20 @@ The "intended" way to customize the fuzzer is to subclass the `Fuzzer` class and
 
 `CreatePRNG()` - Can be overriden in order to use custom PRNG.
 
+## FAQ
+
+Q: On macOS, I'm getting an error related to `task_for_pid`.
+
+A: On macOS, a debugger (Jackalope is acting as a debugger for the target) needs to have an appropriate permission to debug another process. This can be resolved in two ways:
+ - By running Jackalope with higher permissions (e.g. using `sudo`). Depending on the target, SIP might need to be disabled as well.
+ - By building the target with appropriate entitlements, e.g. `Get Task Allow` entitlement. The easiest way to do that is to simply build the target with XCode, as XCode will automatically add appropriate entitlements for debugging to the target.
+ 
+Q: I am getting errors/crashes/hangs when running under instrumentation that I'm not getting when running the target normally.
+
+A: These can usually be resolved by adding the following flags:
+ - Especially if you are getting errors related to custom exceptions or C++ exception processing, these can be resolved by adding `-patch_return_addresses` flag. You can read more about it [here](https://github.com/googleprojectzero/TinyInst#return-address-patching). Warning: `-patch_return_addresses` will have significant performance impact.
+ - Try adding `-stack_offset 0x1000` or another value. This will resolve instrumentation issues with target writing on address lower than the stack pointer (this behavior was obeserved on macOS with leaf functions in some modules).
+
 ## Disclaimer
 
 This is not an official Google product.
