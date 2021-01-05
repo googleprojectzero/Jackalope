@@ -19,7 +19,7 @@ add_subdirectory(TinyInst)
 
 project("fuzzer")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/mersenne)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/Mersenne)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/TinyInst)
 
 add_library(fuzzerlib STATIC
