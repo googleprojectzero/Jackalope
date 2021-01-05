@@ -20,6 +20,8 @@ limitations under the License.
 
 class PRNG {
 public:
+  virtual ~PRNG() {}
+  
   static int SecureRandom(void *data, size_t size);
 
   /* generates a random number on [0,0xffffffff]-interval */

@@ -88,8 +88,6 @@ SHMSampleDelivery::SHMSampleDelivery(char *name, size_t size) {
   {
     FATAL("Error creating shared memory");
   }
-
-  return 0;
 }
 
 SHMSampleDelivery::~SHMSampleDelivery() {
