@@ -188,6 +188,9 @@ std::string TinyInstInstrumentation::GetCrashName() {
   case LiteCov::ExceptionType::ILLEGAL_INSTRUCTION:
     stream << "illegal_instruction";
     break;
+  case LiteCov::ExceptionType::STACK_OVERFLOW:
+    stream << "stack_overflow";
+    break;
   default:
     stream << "other";
     break;
