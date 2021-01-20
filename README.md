@@ -161,6 +161,13 @@ A: These can often be resolved by adding the following flags:
  - Especially if you are getting errors related to custom exceptions or C++ exception processing, these can be resolved by adding `-patch_return_addresses` flag. You can read more about it [here](https://github.com/googleprojectzero/TinyInst#return-address-patching). Warning: `-patch_return_addresses` will have significant performance impact. On Windows, a faster alternative to `-patch_return_addresses` is to fuzz a 32-bit build of your target.
  - Try adding `-stack_offset 0x1000` or another value. This will resolve instrumentation issues with target writing on address lower than the stack pointer (this behavior was obeserved on macOS with leaf functions in some modules).
 
+Q: Getting coverage is nice, but can I also have memory sanitization?
+
+A: I recommend using special allocators provided by the operating system itself to catch memory errors more reliably.
+
+ - On Windows: You can use [Page Heap](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/gflags-and-pageheap). Specifically, you can use `gflags.exe /i <target_executable> +hpa` (Note: needs to be called as an administrator) to enable page heap for your target process.
+ - On macOS: You can use [Guard Malloc](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/Articles/MallocDebug.html) although note that its support in TinyInst is experimental and additional workarounds might be required. See [this page](https://github.com/googleprojectzero/TinyInst/tree/master/macOS#tinyinst-and-guard-malloc) for more information.
+
 ## Disclaimer
 
 This is not an official Google product.
