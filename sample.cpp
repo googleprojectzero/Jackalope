@@ -91,7 +91,7 @@ void Sample::Append(char *data, size_t size) {
 }
 
 void Sample::Trim(size_t new_size) {
-  if ((new_size < 0) || (new_size > this->size)) new_size = this->size;
+  if ((new_size < 0) || (new_size > this->size)) return;
   this->size = new_size;
   bytes = (char *)realloc(bytes, this->size);
 }

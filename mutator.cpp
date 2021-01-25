@@ -55,6 +55,7 @@ bool BlockFlipMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Samp
 bool AppendMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   // printf("In AppendMutator::Mutate\n");
   size_t old_size = inout_sample->size;
+  if (old_size >= MAX_SAMPLE_SIZE) return true;
   size_t append = prng->Rand(min_append, max_append);
   if ((old_size + append) > MAX_SAMPLE_SIZE) {
     append = MAX_SAMPLE_SIZE - old_size;
@@ -73,6 +74,7 @@ bool AppendMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
 bool BlockInsertMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   // printf("In BlockInsertMutator::Mutate\n");
   size_t old_size = inout_sample->size;
+  if (old_size >= MAX_SAMPLE_SIZE) return true;
   size_t to_insert = prng->Rand(min_insert, max_insert);
   if ((old_size + to_insert) > MAX_SAMPLE_SIZE) {
     to_insert = MAX_SAMPLE_SIZE - old_size;
@@ -102,9 +104,9 @@ bool BlockDuplicateMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector
   if (inout_sample->size >= MAX_SAMPLE_SIZE) return true;
   size_t blockpos, blocksize;
   if (!GetRandBlock(inout_sample->size, min_block_size, max_block_size, &blockpos, &blocksize, prng)) return true;
-  size_t blockcount = prng->Rand(min_duplicate_cnt, max_duplicate_cnt);
+  int64_t blockcount = prng->Rand(min_duplicate_cnt, max_duplicate_cnt);
   if ((inout_sample->size + blockcount * blocksize) > MAX_SAMPLE_SIZE)
-    blockcount = (MAX_SAMPLE_SIZE - inout_sample->size) / blocksize;
+    blockcount = (MAX_SAMPLE_SIZE - (int64_t)inout_sample->size) / blocksize;
   if (blockcount <= 0) return true;
   char *newbytes;
   newbytes = (char *)malloc(inout_sample->size + blockcount * blocksize);
@@ -202,6 +204,7 @@ bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
       free(inout_sample->bytes);
       inout_sample->bytes = new_bytes;
       inout_sample->size = new_sample_size;
+      if (inout_sample->size > MAX_SAMPLE_SIZE) inout_sample->Trim(MAX_SAMPLE_SIZE);
       return true;
     }
   } else if(points != 2) {
