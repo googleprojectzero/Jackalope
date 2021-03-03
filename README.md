@@ -50,6 +50,8 @@ Currently, Windows and macOS.
 
 ## Building Jackalope
 
+Prerequisite: Python 3
+
 1. Open a terminal and set up your build environment if needed. On Windows, instead of opening a generic command prompt, you'll want to open Visual Studio command prompt for the platform you are building for, or run `vcvars64.bat` / `vcvars32.bat`.
 
 2. Navigate to the directory containing the source.
