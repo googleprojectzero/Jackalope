@@ -32,7 +32,7 @@ limitations under the License.
 using namespace std;
 
 void Fuzzer::PrintUsage() {
-  printf("Incorrect usage, please refer to the doumentation\n");
+  printf("Incorrect usage, please refer to the documentation\n");
   exit(0);
 }
 
