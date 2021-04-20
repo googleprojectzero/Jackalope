@@ -152,7 +152,7 @@ void Fuzzer::Run(int argc, char **argv) {
     GetFilesInDirectory(in_dir, input_files);
 
     if (input_files.size() == 0) {
-      FATAL("Error: no input files read\n");
+      WARN("Input directory is empty\n");
     } else {
       SAY("%d input files read\n", (int)input_files.size());
     }
@@ -199,6 +199,12 @@ void Fuzzer::Run(int argc, char **argv) {
 }
 
 RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Coverage *coverage, uint32_t init_timeout, uint32_t timeout) {
+  // from this point on, the sample could be filtered
+  Sample filteredSample;
+  if (OutputFilter(sample, &filteredSample)) {
+    sample = &filteredSample;
+  }
+
   // not protected by a mutex but not important to be perfectly accurate
   total_execs++;
 
@@ -298,11 +304,6 @@ RunResult Fuzzer::TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t 
 }
 
 RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout) {
-  Sample filteredSample;
-  if (OutputFilter(sample, &filteredSample)) {
-    sample = &filteredSample;
-  }
-
   if (has_new_coverage) {
     *has_new_coverage = 0;
   }
@@ -354,7 +355,7 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
       *has_new_coverage = 1;
     }
 
-    if (trim) TrimSample(tc, sample, &stableCoverage, init_timeout, timeout);
+    if (trim) MinimizeSample(tc, sample, &stableCoverage, init_timeout, timeout);
 
     output_mutex.Lock();
     char fileindex[20];
@@ -398,43 +399,33 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
   return result;
 }
 
-void Fuzzer::TrimSample(ThreadContext *tc, Sample *sample, Coverage* stable_coverage, uint32_t init_timeout, uint32_t timeout) {
-  if (sample->size <= 1) return;
+void Fuzzer::MinimizeSample(ThreadContext *tc, Sample *sample, Coverage* stable_coverage, uint32_t init_timeout, uint32_t timeout) {
+  Minimizer* minimizer = tc->minimizer;
+  
+  if (!minimizer) return;
 
-  int trim_step = TRIM_STEP_INITIAL;
+  MinimizerContext* context = minimizer->CreateContext(sample);
 
-  size_t trimmed_size = sample->size;
   Sample test_sample = *sample;
 
   while (1) {
-    if (test_sample.size <= 1) break;
-    while (trim_step >= test_sample.size) {
-      trim_step /= 2;
-    }
-    if (trim_step == 0) break;
-
-    test_sample.Trim(test_sample.size - trim_step);
+    if (!minimizer->MinimizeStep(&test_sample, context)) break;
 
     Coverage test_coverage;
-
     RunResult result = RunSampleAndGetCoverage(tc, &test_sample, &test_coverage, init_timeout, timeout);
+
     if (result != OK) break;
 
     if (!CoverageContains(test_coverage, *stable_coverage)) {
-      trim_step /= 2;
-      if (trim_step == 0) break;
-
+      minimizer->ReportFail(&test_sample, context);
       test_sample = *sample;
-      test_sample.Trim(trimmed_size);
-      continue;
+    } else {
+      minimizer->ReportSuccess(&test_sample, context);
+      *sample = test_sample;
     }
-
-    trimmed_size = test_sample.size;
   }
 
-  if (trimmed_size < sample->size) {
-    sample->Trim(trimmed_size);
-  }
+  delete context;
 }
 
 
@@ -491,9 +482,6 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
 
   if (state == INPUT_SAMPLE_PROCESSING) {
     if (input_files.empty() && !samples_pending) {
-      if (sample_queue.empty()) {
-        FATAL("No interesting input files\n");
-      }
       if (server) {
         server_mutex.Lock();
         coverage_mutex.Lock();
@@ -514,6 +502,25 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
       state = FUZZING;
     }
   }
+
+  if ((state == FUZZING) && sample_queue.empty()) {
+    if (tc->mutator->CanGenerateSample()) {
+      printf("Sample queue is empty, but the mutatator supports sample generation\n");
+      printf("Will try to generate initial samples\n");
+      state = GENERATING_SAMPLES;
+    } else {
+      FATAL("No interesting input files\n");
+    }
+  }
+
+  if (state == GENERATING_SAMPLES
+      && (sample_queue.size() >= MIN_SAMPLES_TO_GENERATE)
+      && (!samples_pending))
+  {
+      state = FUZZING;
+  }
+
+  // create a job according to the state
 
   if (state == FUZZING) {
     if (sample_queue.empty()) {
@@ -550,6 +557,15 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
       job->sample = new Sample();
       *job->sample = server_samples.front();
       server_samples.pop_front();
+      samples_pending++;
+    }
+  } else if (state == GENERATING_SAMPLES) {
+    if (sample_queue.size() >= MIN_SAMPLES_TO_GENERATE) {
+      job->type = WAIT;
+    } else {
+      job->type = PROCESS_SAMPLE;
+      job->sample = new Sample();
+      tc->mutator->GenerateSample(job->sample, tc->prng);
       samples_pending++;
     }
   } else {
@@ -742,6 +758,7 @@ Fuzzer::ThreadContext *Fuzzer::CreateThreadContext(int argc, char **argv, int th
   tc->mutator = CreateMutator(argc, argv, tc);
   tc->instrumentation = CreateInstrumentation(argc, argv, tc);
   tc->sampleDelivery = CreateSampleDelivery(argc, argv, tc);
+  tc->minimizer = CreateMinimizer(argc, argv, tc);
 
   // ignore coverage from the corpus
   coverage_mutex.Lock();
@@ -813,6 +830,11 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
   } else {
     FATAL("Unknown sample delivery option");
   }
+}
+
+Minimizer* Fuzzer::CreateMinimizer(int argc, char** argv, ThreadContext* tc) {
+  SimpleTrimmer* trimmer = new SimpleTrimmer();
+  return trimmer;
 }
 
 bool Fuzzer::OutputFilter(Sample *original_sample, Sample *output_sample) {

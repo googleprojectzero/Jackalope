@@ -33,6 +33,8 @@ add_library(fuzzerlib STATIC
   instrumentation.h
   mutator.cpp
   mutator.h
+  minimizer.cpp
+  minimizer.h
   mutex.cpp
   mutex.h
   prng.cpp

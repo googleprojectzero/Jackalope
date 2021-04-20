@@ -35,6 +35,8 @@ public:
   virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) { }
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) = 0;
   virtual void NotifyResult(RunResult result, bool has_new_coverage) { }
+  virtual bool CanGenerateSample() { return false;  }
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) { return false; }
 protected:
   // a helper function to get a random chunk of sample (with size samplesize)
   // chunk size is between minblocksize and maxblocksize
@@ -70,6 +72,10 @@ public:
   virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
     child_mutator->NotifyResult(result, has_new_coverage);
   }
+
+  virtual bool CanGenerateSample() { return child_mutator->CanGenerateSample(); }
+
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) { return child_mutator->GenerateSample(sample, prng); }
 
 protected:
   size_t current_round;
@@ -119,6 +125,21 @@ public:
     child_mutators[current_mutator_index]->NotifyResult(result, has_new_coverage);
   }
 
+  virtual bool CanGenerateSample() {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      if (child_mutators[i]->CanGenerateSample()) return true;
+    }
+    return false;
+  }
+
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      if (child_mutators[i]->CanGenerateSample()) {
+        return child_mutators[i]->GenerateSample(sample, prng);
+      }
+    }  
+  }
+
 protected:
   int current_mutator_index;
   std::vector<Mutator *> child_mutators;
@@ -153,6 +174,22 @@ class SelectMutator : public Mutator {
 
   virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
     child_mutators[last_mutator_index]->NotifyResult(result, has_new_coverage);
+  }
+
+  virtual bool CanGenerateSample() {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      if (child_mutators[i]->CanGenerateSample()) return true;
+    }
+    return false;
+  }
+
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+    int mutator_index = prng->Rand() % child_mutators.size();
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      if (child_mutators[(i + mutator_index) % child_mutators.size()]->CanGenerateSample()) {
+        return child_mutators[(i + mutator_index) % child_mutators.size()]->GenerateSample(sample, prng);
+      }
+    }
   }
 
 protected:
@@ -212,6 +249,35 @@ public:
     child_mutators[last_mutator_index].mutator->NotifyResult(result, has_new_coverage);
   }
 
+  virtual bool CanGenerateSample() {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      if (child_mutators[i].mutator->CanGenerateSample()) return true;
+    }
+    return false;
+  }
+
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+    double psum = 0;
+    size_t last_generator = 0;
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      if (child_mutators[i].mutator->CanGenerateSample()) {
+        psum += child_mutators[i].p;
+        last_generator = i;
+      }
+    }
+    double p = prng->RandReal() * psum;
+    double sum = 0;
+    for (int i = 0; i < child_mutators.size(); i++) {
+      if (!child_mutators[i].mutator->CanGenerateSample()) continue;
+      sum += child_mutators[i].p;
+      if ((p < sum) || (i == last_generator)) {
+        last_mutator_index = i;
+        Mutator* current_mutator = child_mutators[i].mutator;
+        return current_mutator->GenerateSample(sample, prng);
+      }
+    }
+  }
+
 protected:
   double psum;
   int last_mutator_index;
@@ -247,6 +313,14 @@ public:
 
   virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
     child_mutator->NotifyResult(result, has_new_coverage);
+  }
+
+  virtual bool CanGenerateSample() {
+    return child_mutator->CanGenerateSample();
+  }
+
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+    return child_mutator->GenerateSample(sample, prng);
   }
 
 public:

@@ -25,6 +25,7 @@ limitations under the License.
 #include "mutex.h"
 #include "coverage.h"
 #include "instrumentation.h"
+#include "minimizer.h"
 
 class PRNG;
 class Mutator;
@@ -36,12 +37,13 @@ class CoverageClient;
 
 #define CRASH_REPRODUCE_TIMES 10
 #define SAMPLE_RETRY_TIMES 10
-#define TRIM_STEP_INITIAL 16
 
 #define MAX_IDENTICAL_CRASHES 4
 
 // save state every 5 minutes
 #define FUZZER_SAVE_INERVAL (5 * 60)
+
+#define MIN_SAMPLES_TO_GENERATE 10
 
 class Fuzzer {
 public:
@@ -55,6 +57,7 @@ public:
     PRNG *prng;
     Mutator *mutator;
     Instrumentation * instrumentation;
+    Minimizer* minimizer;
 
     //std::string target_cmd;
     int target_argc;
@@ -73,6 +76,7 @@ private:
   enum FuzzerState {
     INPUT_SAMPLE_PROCESSING,
     SERVER_SAMPLE_PROCESSING,
+    GENERATING_SAMPLES,
     FUZZING,
   };
 
@@ -132,7 +136,8 @@ private:
   virtual Mutator *CreateMutator(int argc, char **argv, ThreadContext *tc) = 0;
   virtual PRNG *CreatePRNG(int argc, char **argv, ThreadContext *tc);
   virtual Instrumentation *CreateInstrumentation(int argc, char **argv, ThreadContext *tc);
-  virtual SampleDelivery *CreateSampleDelivery(int argc, char **argv, ThreadContext *tc);
+  virtual SampleDelivery* CreateSampleDelivery(int argc, char** argv, ThreadContext* tc);
+  virtual Minimizer* CreateMinimizer(int argc, char** argv, ThreadContext* tc);
   virtual bool OutputFilter(Sample *original_sample, Sample *output_sample);
   virtual void AdjustSamplePriority(ThreadContext *tc, SampleQueueEntry *entry, int found_new_coverage);
 
@@ -143,7 +148,7 @@ private:
   RunResult RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout);
   RunResult RunSampleAndGetCoverage(ThreadContext* tc, Sample* sample, Coverage* coverage, uint32_t init_timeout, uint32_t timeout);
   RunResult TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t init_timeout, uint32_t timeout);
-  void TrimSample(ThreadContext *tc, Sample *sample, Coverage* stable_coverage, uint32_t init_timeout, uint32_t timeout);
+  void MinimizeSample(ThreadContext *tc, Sample *sample, Coverage* stable_coverage, uint32_t init_timeout, uint32_t timeout);
 
   int InterestingSample(ThreadContext *tc, Sample *sample, Coverage *stableCoverage, Coverage *variableCoverage);
 
