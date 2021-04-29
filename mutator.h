@@ -73,9 +73,9 @@ public:
     child_mutator->NotifyResult(result, has_new_coverage);
   }
 
-  virtual bool CanGenerateSample() { return child_mutator->CanGenerateSample(); }
+  virtual bool CanGenerateSample() override { return child_mutator->CanGenerateSample(); }
 
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) { return child_mutator->GenerateSample(sample, prng); }
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) override { return child_mutator->GenerateSample(sample, prng); }
 
 protected:
   size_t current_round;
@@ -125,14 +125,14 @@ public:
     child_mutators[current_mutator_index]->NotifyResult(result, has_new_coverage);
   }
 
-  virtual bool CanGenerateSample() {
+  virtual bool CanGenerateSample() override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       if (child_mutators[i]->CanGenerateSample()) return true;
     }
     return false;
   }
 
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       if (child_mutators[i]->CanGenerateSample()) {
         return child_mutators[i]->GenerateSample(sample, prng);
@@ -176,14 +176,14 @@ class SelectMutator : public Mutator {
     child_mutators[last_mutator_index]->NotifyResult(result, has_new_coverage);
   }
 
-  virtual bool CanGenerateSample() {
+  virtual bool CanGenerateSample() override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       if (child_mutators[i]->CanGenerateSample()) return true;
     }
     return false;
   }
 
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
     int mutator_index = prng->Rand() % child_mutators.size();
     for (size_t i = 0; i < child_mutators.size(); i++) {
       if (child_mutators[(i + mutator_index) % child_mutators.size()]->CanGenerateSample()) {
@@ -249,14 +249,14 @@ public:
     child_mutators[last_mutator_index].mutator->NotifyResult(result, has_new_coverage);
   }
 
-  virtual bool CanGenerateSample() {
+  virtual bool CanGenerateSample() override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       if (child_mutators[i].mutator->CanGenerateSample()) return true;
     }
     return false;
   }
 
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
     double psum = 0;
     size_t last_generator = 0;
     for (size_t i = 0; i < child_mutators.size(); i++) {
@@ -316,11 +316,11 @@ public:
     child_mutator->NotifyResult(result, has_new_coverage);
   }
 
-  virtual bool CanGenerateSample() {
+  virtual bool CanGenerateSample() override {
     return child_mutator->CanGenerateSample();
   }
 
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) {
+  virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
     return child_mutator->GenerateSample(sample, prng);
   }
 
