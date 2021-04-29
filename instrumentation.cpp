@@ -201,3 +201,7 @@ std::string TinyInstInstrumentation::GetCrashName() {
   stream << AnonymizeAddress(exception.access_address);
   return stream.str();
 }
+
+uint64_t TinyInstInstrumentation::GetReturnValue() {
+  return instrumentation->GetTargetReturnValue();
+}

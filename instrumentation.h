@@ -41,6 +41,8 @@ public:
 
   virtual std::string GetCrashName() { return "crash"; };
 
+  virtual uint64_t GetReturnValue() { return 0; }
+
   std::string AnonymizeAddress(void* addr);
 };
 
@@ -61,6 +63,8 @@ public:
   void GetCoverage(Coverage &coverage, bool clear_coverage) override;
   void ClearCoverage() override;
   void IgnoreCoverage(Coverage &coverage) override;
+
+  uint64_t GetReturnValue() override;
 
   std::string GetCrashName() override;
 

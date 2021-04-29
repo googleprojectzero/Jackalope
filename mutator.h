@@ -276,6 +276,7 @@ public:
         return current_mutator->GenerateSample(sample, prng);
       }
     }
+    return false;
   }
 
 protected:

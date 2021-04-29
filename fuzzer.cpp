@@ -314,6 +314,8 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
 
   if (result != OK) return result;
 
+  if (!IsReturnValueInteresting(tc->instrumentation->GetReturnValue())) return result;
+
   if (initialCoverage.empty()) return result;
 
   // printf("found new coverage: \n");
@@ -611,7 +613,7 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
     Sample mutated_sample = *entry->sample;
     if (!tc->mutator->Mutate(&mutated_sample, tc->prng, tc->all_samples_local)) break;
     if (mutated_sample.size > MAX_SAMPLE_SIZE) {
-      mutated_sample.Trim(MAX_SAMPLE_SIZE);
+      continue;
     }
 
     int has_new_coverage;

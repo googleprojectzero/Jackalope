@@ -71,7 +71,7 @@ public:
 
   void RunFuzzerThread(ThreadContext *tc);
 
-private:
+protected:
 
   enum FuzzerState {
     INPUT_SAMPLE_PROCESSING,
@@ -140,6 +140,9 @@ private:
   virtual Minimizer* CreateMinimizer(int argc, char** argv, ThreadContext* tc);
   virtual bool OutputFilter(Sample *original_sample, Sample *output_sample);
   virtual void AdjustSamplePriority(ThreadContext *tc, SampleQueueEntry *entry, int found_new_coverage);
+
+  // by default, all return values are interesting
+  virtual bool IsReturnValueInteresting(uint64_t return_value) { return true; }
 
   void ReplaceTargetCmdArg(ThreadContext *tc, const char *search, const char *replace);
   
