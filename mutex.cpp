@@ -50,20 +50,20 @@ ReadWriteMutex::~ReadWriteMutex() {
   delete counter_mutex;
 }
 
-//lock data for reading only, other readers possible, but no writers
-void ReadWriteMutex::LockRead() {
+//lock data for writing, no other readers or writers possible
+void ReadWriteMutex::LockWrite() {
   no_writers->Lock();
   no_readers->Lock();
   no_readers->Unlock();
 }
 
-//unlocks data after LockRead
-void ReadWriteMutex::UnlockRead() {
+//unlocks data after LockWrite
+void ReadWriteMutex::UnlockWrite() {
   no_writers->Unlock();
 }
 
-//lock data for writing, no other readers or writers possible
-void ReadWriteMutex::LockWrite() {
+//lock data for reading only, other readers possible, but no writers
+void ReadWriteMutex::LockRead() {
   int prev;
 
   no_writers->Lock();
@@ -75,8 +75,8 @@ void ReadWriteMutex::LockWrite() {
   no_writers->Unlock();
 }
 
-//unlocks data after LockWrite
-void ReadWriteMutex::UnlockWrite() {
+//unlocks data after LockRead
+void ReadWriteMutex::UnlockRead() {
   int current;
 
   counter_mutex->Lock();
