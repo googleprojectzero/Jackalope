@@ -505,7 +505,7 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
     }
   }
 
-  if ((state == FUZZING) && sample_queue.empty()) {
+  if ((state == FUZZING) && (num_samples == 0)) {
     if (tc->mutator->CanGenerateSample()) {
       printf("Sample queue is empty, but the mutatator supports sample generation\n");
       printf("Will try to generate initial samples\n");
