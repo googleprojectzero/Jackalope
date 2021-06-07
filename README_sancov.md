@@ -1,6 +1,6 @@
 ## Sanitizer Coverage on Linux
 
-While Jackalope is primarily a black box binary fuzzer, it can also fuzz targets compiled with Sanitizer Coverage. This mode is only available on Linux. And vice-versa; The only instrumentation currently supported on Linix is Sanitizer Coverage.
+While Jackalope is primarily a black box binary fuzzer, it can also fuzz targets compiled with Sanitizer Coverage. This mode is only available on Linux. And vice-versa; The only instrumentation mode currently supported on Linux is Sanitizer Coverage.
 
 ### Preparing the target
 
