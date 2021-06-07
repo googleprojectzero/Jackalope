@@ -46,7 +46,9 @@ Jackalope does not currently include advanced mutation strategies. Instead it sh
 
 ### Which platforms are supported?
 
-Currently, Windows and macOS.
+Currently, fuzzing of black-box binaries is supported on Windows and macOS.
+
+Jackalope is also able to run on Linux with Sanitizer Coverage (source code for the targer required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
 
 ## Building Jackalope
 
