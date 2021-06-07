@@ -27,6 +27,12 @@ limitations under the License.
 #include "instrumentation.h"
 #include "minimizer.h"
 
+#ifdef linux
+#include "sancovinstrumentation.h"
+#else
+#include "tinyinstinstrumentation.h"
+#endif
+
 class PRNG;
 class Mutator;
 class Instrumentation;

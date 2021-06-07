@@ -17,6 +17,7 @@ limitations under the License.
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
+#include <string.h>
 #include "common.h"
 #include "sample.h"
 #include "fuzzer.h"
@@ -418,7 +419,9 @@ void Fuzzer::MinimizeSample(ThreadContext *tc, Sample *sample, Coverage* stable_
 
     if (result != OK) break;
 
-    if (!CoverageContains(test_coverage, *stable_coverage)) {
+    if (!IsReturnValueInteresting(tc->instrumentation->GetReturnValue())
+        || !CoverageContains(test_coverage, *stable_coverage))
+    {
       minimizer->ReportFail(&test_sample, context);
       test_sample = *sample;
     } else {
@@ -800,7 +803,11 @@ PRNG *Fuzzer::CreatePRNG(int argc, char **argv, ThreadContext *tc) {
 }
 
 Instrumentation *Fuzzer::CreateInstrumentation(int argc, char **argv, ThreadContext *tc) {
+#ifdef linux
+  SanCovInstrumentation *instrumentation = new SanCovInstrumentation(tc->thread_id);
+#else
   TinyInstInstrumentation *instrumentation = new TinyInstInstrumentation();
+#endif
   instrumentation->Init(argc, argv);
   return instrumentation;
 }

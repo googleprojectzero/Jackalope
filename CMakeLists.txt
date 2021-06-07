@@ -15,12 +15,30 @@
 cmake_minimum_required(VERSION "3.1")
 set (CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(TinyInst)
+if(UNIX AND NOT APPLE)
+  set(LINUX TRUE)
+endif()
+
+if(NOT LINUX)
+  add_subdirectory(TinyInst)
+endif()
 
 project("fuzzer")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/Mersenne)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/TinyInst)
+
+if(LINUX)
+  set(platform_specific_sources
+    sancovinstrumentation.h
+    sancovinstrumentation.cpp
+  )
+else()
+  set(platform_specific_sources
+    tinyinstinstrumentation.h
+    tinyinstinstrumentation.cpp
+  )
+endif()
 
 add_library(fuzzerlib STATIC
   client.cpp
@@ -50,7 +68,24 @@ add_library(fuzzerlib STATIC
   server.h
   thread.cpp
   thread.h
+  ${platform_specific_sources}
   )
+  
+if(LINUX)
+  target_link_libraries(fuzzerlib rt)
+  target_link_libraries(fuzzerlib pthread)
+endif()
+
+# In case of Linux, compile a minimum TinyInst
+# with only multiplatform essentials.
+if(LINUX) 
+  add_library(tinyinst STATIC
+    TinyInst/common.h
+    TinyInst/common.cpp
+    TinyInst/coverage.h
+    TinyInst/coverage.cpp
+    )
+endif()
 
 add_dependencies(fuzzerlib tinyinst)
 target_link_libraries(fuzzerlib tinyinst)
@@ -68,3 +103,25 @@ target_link_libraries(fuzzer fuzzerlib)
 add_executable(test
   test.cpp
   )
+  
+if(LINUX)
+  target_link_libraries(test rt)
+endif()
+
+if(LINUX)
+  if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
+    message(FATAL_ERROR "You need to use Clang to compile the target with Sanitizer Coverage")
+  endif()
+
+  add_executable(sancovtest
+    sancovclient.h
+    sancovclient.cpp
+    sancovtest.cpp
+    )
+  target_link_libraries(sancovtest rt)
+  target_compile_options(sancovtest PRIVATE "-fsanitize-coverage=trace-pc-guard")
+  target_compile_options(sancovtest PRIVATE "-fsanitize=address")
+  target_link_options(sancovtest PRIVATE "-fsanitize=address")
+endif()
+
+

@@ -46,31 +46,3 @@ public:
   std::string AnonymizeAddress(void* addr);
 };
 
-class LiteCov;
-
-class TinyInstInstrumentation : public Instrumentation {
-public:
-  ~TinyInstInstrumentation();
-
-  void Init(int argc, char **argv) override;
-
-  RunResult Run(int argc, char** argv, uint32_t init_timeout, uint32_t timeout) override;
-  RunResult RunWithCrashAnalysis(int argc, char** argv, uint32_t init_timeout, uint32_t timeout) override;
-
-  void CleanTarget() override;
-
-  bool HasNewCoverage() override;
-  void GetCoverage(Coverage &coverage, bool clear_coverage) override;
-  void ClearCoverage() override;
-  void IgnoreCoverage(Coverage &coverage) override;
-
-  uint64_t GetReturnValue() override;
-
-  std::string GetCrashName() override;
-
-protected:
-  LiteCov * instrumentation;
-  bool persist;
-  int num_iterations;
-  int cur_iteration;
-};

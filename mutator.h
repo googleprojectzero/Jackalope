@@ -107,6 +107,7 @@ public:
     for (size_t i = 0; i < child_mutators.size(); i++) {
       context->contexts[i] = child_mutators[i]->CreateSampleContext(sample);
     }
+    return context;
   }
 
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
@@ -137,7 +138,8 @@ public:
       if (child_mutators[i]->CanGenerateSample()) {
         return child_mutators[i]->GenerateSample(sample, prng);
       }
-    }  
+    }
+    return false;  
   }
 
 protected:
@@ -163,6 +165,7 @@ class SelectMutator : public Mutator {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       context->contexts[i] = child_mutators[i]->CreateSampleContext(sample);
     }
+    return context;
   }
 
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
@@ -190,6 +193,7 @@ class SelectMutator : public Mutator {
         return child_mutators[(i + mutator_index) % child_mutators.size()]->GenerateSample(sample, prng);
       }
     }
+    return false;
   }
 
 protected:
