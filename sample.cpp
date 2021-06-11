@@ -49,7 +49,6 @@ int Sample::Save(const char * filename) {
   FILE *fp;
   fp = fopen(filename,"wb");
   if(!fp) {
-    printf("Error writing sample to %s\n", filename);
     return 0;
   }
   fwrite(bytes, size, 1, fp);

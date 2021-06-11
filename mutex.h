@@ -21,10 +21,9 @@ limitations under the License.
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
 #include <windows.h>
-#endif
-
+#else
 #include <mutex>
-#include <shared_mutex>
+#endif
 
 class Mutex {
 public:
@@ -40,14 +39,17 @@ private:
 #endif
 };
 
+//Readers-writers mutex with no thread starvation
+//see http://en.wikipedia.org/wiki/Readers-writers_problem
 class ReadWriteMutex {
 private:
-  std::shared_mutex mutex;
+  Mutex *no_writers, *no_readers, *counter_mutex;
+  int nreaders;
 
 public:
 
-  ReadWriteMutex() {}
-  ~ReadWriteMutex() {}
+  ReadWriteMutex();
+  ~ReadWriteMutex();
 
   //lock data for reading only, other readers possible, but no writers
   void LockRead();
