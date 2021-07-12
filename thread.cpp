@@ -21,7 +21,9 @@ limitations under the License.
 
 
 void CreateThread(void *(*start_routine) (void *), void *arg) {
-  CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)start_routine, arg, 0, NULL);
+  HANDLE thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)start_routine, arg, 0, NULL);
+  // close the handle immediately to prevent handle leak
+  if(thread_handle) CloseHandle(thread_handle);
 }
 
 #else
