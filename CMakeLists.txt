@@ -68,6 +68,12 @@ add_library(fuzzerlib STATIC
   server.h
   thread.cpp
   thread.h
+  mutators/grammar/grammar.h
+  mutators/grammar/grammar.cpp
+  mutators/grammar/grammarmutator.h
+  mutators/grammar/grammarmutator.cpp
+  mutators/grammar/grammarminimizer.h
+  mutators/grammar/grammarminimizer.cpp
   ${platform_specific_sources}
   )
   

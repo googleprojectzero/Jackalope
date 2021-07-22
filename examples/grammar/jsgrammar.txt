@@ -1,0 +1,1422 @@
+# based on https://tc39.es/ecma262/#sec-grammar-summary
+# and modified to increase the probility of valid code
+
+# <root> = function main() {<crlf><statementlist>}<crlf>main();<crlf>
+# <root> = <statementlist><jitfunctiondeclaration><calljitloop><statementlist><calljit>
+<root> = <statementlist>function main() {<crlf><statementlist>}<crlf>main();<crlf><statementlist>
+
+# treshold for different kinds of JIT
+<jittreshold> = 10
+<jittreshold> = 100
+
+
+# Common stuff
+
+<digit> = 0
+<digit> = 1
+<digit> = 2
+<digit> = 3
+<digit> = 4
+<digit> = 5
+<digit> = 6
+<digit> = 7
+<digit> = 8
+<digit> = 9
+
+# garbage collection
+<builtinidentifier> = gc
+<builtinidentifier> = CollectGarbage
+
+# jsc specific
+# <builtinidentifier> = transferArrayBuffer
+# <builtinidentifier> = noInline
+# <builtinidentifier> = noFTL
+# <builtinidentifier> = createGlobalObject
+
+<builtinidentifier> = Object
+<builtinidentifier> = Array
+<builtinidentifier> = Function
+<builtinidentifier> = String
+<builtinidentifier> = Boolean
+<builtinidentifier> = Number
+<builtinidentifier> = BigInt
+<builtinidentifier> = RegExp
+<builtinidentifier> = ArrayBuffer
+<builtinidentifier> = Uint8Array
+<builtinidentifier> = Int8Array
+<builtinidentifier> = Uint16Array
+<builtinidentifier> = Int16Array
+<builtinidentifier> = Uint32Array
+<builtinidentifier> = Int32Array
+<builtinidentifier> = Float32Array
+<builtinidentifier> = Float64Array
+<builtinidentifier> = Uint8ClampedArray
+<builtinidentifier> = DataView
+<builtinidentifier> = Promise
+<builtinidentifier> = Proxy
+<builtinidentifier> = Map
+<builtinidentifier> = WeakMap
+<builtinidentifier> = Set
+<builtinidentifier> = WeakSet
+<builtinidentifier> = Math
+<builtinidentifier> = JSON
+<builtinidentifier> = Reflect
+<builtinidentifier> = isNan
+<builtinidentifier> = isFinite
+<builtinidentifier> = eval
+<builtinidentifier> = parseInt
+<builtinidentifier> = parseFloat
+<builtinidentifier> = undefined
+<builtinidentifier> = this
+<builtinidentifier> = arguments
+<builtinidentifier> = __proto__
+<builtinidentifier> = constructor
+<builtinidentifier> = length
+<builtinidentifier> = charAt
+<builtinidentifier> = charCodeAt
+<builtinidentifier> = codePointAt
+<builtinidentifier> = concat
+<builtinidentifier> = includes
+<builtinidentifier> = endsWith
+<builtinidentifier> = indexOf
+<builtinidentifier> = lastIndexOf
+<builtinidentifier> = match
+<builtinidentifier> = matchAll
+<builtinidentifier> = padEnd
+<builtinidentifier> = padStart
+<builtinidentifier> = repeat
+<builtinidentifier> = replace
+<builtinidentifier> = replaceAll
+<builtinidentifier> = search
+<builtinidentifier> = slice
+<builtinidentifier> = split
+<builtinidentifier> = startsWith
+<builtinidentifier> = substring
+<builtinidentifier> = trim
+<builtinidentifier> = __proto__
+<builtinidentifier> = flags
+<builtinidentifier> = dotAll
+<builtinidentifier> = global
+<builtinidentifier> = ignoreCase
+<builtinidentifier> = multiline
+<builtinidentifier> = source
+<builtinidentifier> = sticky
+<builtinidentifier> = unicode
+<builtinidentifier> = compile
+<builtinidentifier> = exec
+<builtinidentifier> = test
+<builtinidentifier> = __proto__
+<builtinidentifier> = description
+<builtinidentifier> = __proto__
+<builtinidentifier> = length
+<builtinidentifier> = constructor
+<builtinidentifier> = concat
+<builtinidentifier> = copyWithin
+<builtinidentifier> = fill
+<builtinidentifier> = find
+<builtinidentifier> = findIndex
+<builtinidentifier> = pop
+<builtinidentifier> = push
+<builtinidentifier> = reverse
+<builtinidentifier> = shift
+<builtinidentifier> = unshift
+<builtinidentifier> = slice
+<builtinidentifier> = sort
+<builtinidentifier> = splice
+<builtinidentifier> = includes
+<builtinidentifier> = indexOf
+<builtinidentifier> = keys
+<builtinidentifier> = entries
+<builtinidentifier> = forEach
+<builtinidentifier> = filter
+<builtinidentifier> = map
+<builtinidentifier> = every
+<builtinidentifier> = some
+<builtinidentifier> = reduce
+<builtinidentifier> = reduceRight
+<builtinidentifier> = toString
+<builtinidentifier> = toLocaleString
+<builtinidentifier> = join
+<builtinidentifier> = lastIndexOf
+<builtinidentifier> = values
+<builtinidentifier> = flat
+<builtinidentifier> = flatMap
+<builtinidentifier> = __proto__
+<builtinidentifier> = size
+<builtinidentifier> = clear
+<builtinidentifier> = delete
+<builtinidentifier> = entries
+<builtinidentifier> = forEach
+<builtinidentifier> = get
+<builtinidentifier> = has
+<builtinidentifier> = keys
+<builtinidentifier> = set
+<builtinidentifier> = values
+<builtinidentifier> = catch
+<builtinidentifier> = finally
+<builtinidentifier> = then
+<builtinidentifier> = delete
+<builtinidentifier> = get
+<builtinidentifier> = has
+<builtinidentifier> = set
+<builtinidentifier> = __proto__
+<builtinidentifier> = size
+<builtinidentifier> = add
+<builtinidentifier> = clear
+<builtinidentifier> = delete
+<builtinidentifier> = entries
+<builtinidentifier> = forEach
+<builtinidentifier> = has
+<builtinidentifier> = keys
+<builtinidentifier> = values
+<builtinidentifier> = add
+<builtinidentifier> = delete
+<builtinidentifier> = has
+<builtinidentifier> = __proto__
+<builtinidentifier> = byteLength
+<builtinidentifier> = slice
+<builtinidentifier> = __proto__
+<builtinidentifier> = buffer
+<builtinidentifier> = byteLength
+<builtinidentifier> = byteOffset
+<builtinidentifier> = getInt8
+<builtinidentifier> = getUint8
+<builtinidentifier> = getInt16
+<builtinidentifier> = getUint16
+<builtinidentifier> = getInt32
+<builtinidentifier> = getUint32
+<builtinidentifier> = getFloat32
+<builtinidentifier> = getFloat64
+<builtinidentifier> = setInt8
+<builtinidentifier> = setUint8
+<builtinidentifier> = setInt16
+<builtinidentifier> = setUint16
+<builtinidentifier> = setInt32
+<builtinidentifier> = setUint32
+<builtinidentifier> = setFloat32
+<builtinidentifier> = setFloat64
+<builtinidentifier> = __proto__
+<builtinidentifier> = length
+<builtinidentifier> = constructor
+<builtinidentifier> = buffer
+<builtinidentifier> = byteOffset
+<builtinidentifier> = byteLength
+<builtinidentifier> = copyWithin
+<builtinidentifier> = fill
+<builtinidentifier> = find
+<builtinidentifier> = findIndex
+<builtinidentifier> = reverse
+<builtinidentifier> = slice
+<builtinidentifier> = sort
+<builtinidentifier> = includes
+<builtinidentifier> = indexOf
+<builtinidentifier> = keys
+<builtinidentifier> = entries
+<builtinidentifier> = forEach
+<builtinidentifier> = filter
+<builtinidentifier> = map
+<builtinidentifier> = every
+<builtinidentifier> = set
+<builtinidentifier> = some
+<builtinidentifier> = subarray
+<builtinidentifier> = reduce
+<builtinidentifier> = reduceRight
+<builtinidentifier> = join
+<builtinidentifier> = lastIndexOf
+<builtinidentifier> = values
+<builtinidentifier> = __proto__
+<builtinidentifier> = prototype
+<builtinidentifier> = length
+<builtinidentifier> = constructor
+<builtinidentifier> = arguments
+<builtinidentifier> = caller
+<builtinidentifier> = name
+<builtinidentifier> = apply
+<builtinidentifier> = bind
+<builtinidentifier> = call
+<builtinidentifier> = assign
+<builtinidentifier> = fromEntries
+<builtinidentifier> = getOwnPropertyDescriptor
+<builtinidentifier> = getOwnPropertyDescriptors
+<builtinidentifier> = getOwnPropertyNames
+<builtinidentifier> = getOwnPropertySymbols
+<builtinidentifier> = is
+<builtinidentifier> = preventExtensions
+<builtinidentifier> = seal
+<builtinidentifier> = create
+<builtinidentifier> = defineProperties
+<builtinidentifier> = defineProperty
+<builtinidentifier> = freeze
+<builtinidentifier> = getPrototypeOf
+<builtinidentifier> = setPrototypeOf
+<builtinidentifier> = isExtensible
+<builtinidentifier> = isFrozen
+<builtinidentifier> = isSealed
+<builtinidentifier> = keys
+<builtinidentifier> = entries
+<builtinidentifier> = values
+<builtinidentifier> = assign
+<builtinidentifier> = fromEntries
+<builtinidentifier> = getOwnPropertyDescriptor
+<builtinidentifier> = getOwnPropertyDescriptors
+<builtinidentifier> = getOwnPropertyNames
+<builtinidentifier> = getOwnPropertySymbols
+<builtinidentifier> = is
+<builtinidentifier> = preventExtensions
+<builtinidentifier> = seal
+<builtinidentifier> = create
+<builtinidentifier> = defineProperties
+<builtinidentifier> = defineProperty
+<builtinidentifier> = freeze
+<builtinidentifier> = getPrototypeOf
+<builtinidentifier> = setPrototypeOf
+<builtinidentifier> = isExtensible
+<builtinidentifier> = isFrozen
+<builtinidentifier> = isSealed
+<builtinidentifier> = keys
+<builtinidentifier> = entries
+<builtinidentifier> = values
+<builtinidentifier> = from
+<builtinidentifier> = of
+<builtinidentifier> = isArray
+<builtinidentifier> = fromCharCode
+<builtinidentifier> = fromCodePoint
+<builtinidentifier> = raw
+<builtinidentifier> = prototype
+<builtinidentifier> = EPSILON
+<builtinidentifier> = MAX_SAFE_INTEGER
+<builtinidentifier> = MAX_VALUE
+<builtinidentifier> = MIN_SAFE_INTEGER
+<builtinidentifier> = MIN_VALUE
+<builtinidentifier> = NaN
+<builtinidentifier> = NEGATIVE_INFINITY
+<builtinidentifier> = POSITIVE_INFINITY
+<builtinidentifier> = isNaN
+<builtinidentifier> = isFinite
+<builtinidentifier> = isInteger
+<builtinidentifier> = isSafeInteger
+<builtinidentifier> = iterator
+<builtinidentifier> = asyncIterator
+<builtinidentifier> = match
+<builtinidentifier> = matchAll
+<builtinidentifier> = replace
+<builtinidentifier> = search
+<builtinidentifier> = split
+<builtinidentifier> = hasInstance
+<builtinidentifier> = isConcatSpreadable
+<builtinidentifier> = unscopable
+<builtinidentifier> = species
+<builtinidentifier> = toPrimitive
+<builtinidentifier> = toStringTag
+<builtinidentifier> = for
+<builtinidentifier> = keyFor
+<builtinidentifier> = asIntN
+<builtinidentifier> = asUintN
+<builtinidentifier> = isView
+<builtinidentifier> = resolve
+<builtinidentifier> = reject
+<builtinidentifier> = all
+<builtinidentifier> = race
+<builtinidentifier> = allSettled
+<builtinidentifier> = abs
+<builtinidentifier> = acos
+<builtinidentifier> = acosh
+<builtinidentifier> = asin
+<builtinidentifier> = asinh
+<builtinidentifier> = atan
+<builtinidentifier> = atanh
+<builtinidentifier> = atan2
+<builtinidentifier> = ceil
+<builtinidentifier> = cbrt
+<builtinidentifier> = expm1
+<builtinidentifier> = clz32
+<builtinidentifier> = cos
+<builtinidentifier> = cosh
+<builtinidentifier> = exp
+<builtinidentifier> = floor
+<builtinidentifier> = fround
+<builtinidentifier> = hypot
+<builtinidentifier> = imul
+<builtinidentifier> = log
+<builtinidentifier> = log1p
+<builtinidentifier> = log2
+<builtinidentifier> = log10
+<builtinidentifier> = max
+<builtinidentifier> = min
+<builtinidentifier> = pow
+<builtinidentifier> = random
+<builtinidentifier> = round
+<builtinidentifier> = sign
+<builtinidentifier> = sin
+<builtinidentifier> = sinh
+<builtinidentifier> = sqrt
+<builtinidentifier> = tan
+<builtinidentifier> = tanh
+<builtinidentifier> = trunc
+<builtinidentifier> = parse
+<builtinidentifier> = stringify
+<builtinidentifier> = apply
+<builtinidentifier> = construct
+<builtinidentifier> = defineProperty
+<builtinidentifier> = deleteProperty
+<builtinidentifier> = get
+<builtinidentifier> = getOwnPropertyDescriptor
+<builtinidentifier> = getPrototypeOf
+<builtinidentifier> = has
+<builtinidentifier> = isExtensible
+<builtinidentifier> = ownKeys
+<builtinidentifier> = preventExtensions
+<builtinidentifier> = set
+<builtinidentifier> = setPrototypeOf
+<builtinidentifier> = Symbol
+<builtinidentifier> = Symbol.iterator
+<builtinidentifier> = Symbol.asyncIterator
+<builtinidentifier> = Symbol.match
+<builtinidentifier> = Symbol.matchAll
+<builtinidentifier> = Symbol.replace
+<builtinidentifier> = Symbol.search
+<builtinidentifier> = Symbol.split
+<builtinidentifier> = Symbol.hasInstance
+<builtinidentifier> = Symbol.isConcatSpreadable
+<builtinidentifier> = Symbol.unscopable
+<builtinidentifier> = Symbol.species
+<builtinidentifier> = Symbol.toPrimitive
+<builtinidentifier> = Symbol.toStringTag
+
+<varidentifier> = var00
+<varidentifier> = var01
+<varidentifier> = var02
+<varidentifier> = var03
+<varidentifier> = var04
+<varidentifier> = var05
+<varidentifier> = var06
+<varidentifier> = var07
+<varidentifier> = var08
+<varidentifier> = var09
+<varidentifier> = var10
+<varidentifier> = var11
+<varidentifier> = var12
+<varidentifier> = var13
+<varidentifier> = var14
+<varidentifier> = var15
+<varidentifier> = var16
+<varidentifier> = var17
+<varidentifier> = var18
+<varidentifier> = var19
+<varidentifier> = var20
+<varidentifier> = var21
+<varidentifier> = var22
+<varidentifier> = var23
+<varidentifier> = var24
+<varidentifier> = var25
+<varidentifier> = var26
+<varidentifier> = var27
+<varidentifier> = var28
+<varidentifier> = var29
+<varidentifier> = var30
+<varidentifier> = var31
+<varidentifier> = var32
+<varidentifier> = var33
+<varidentifier> = var34
+<varidentifier> = var35
+<varidentifier> = var36
+<varidentifier> = var37
+<varidentifier> = var38
+<varidentifier> = var39
+<varidentifier> = var40
+<varidentifier> = var41
+<varidentifier> = var42
+<varidentifier> = var43
+<varidentifier> = var44
+<varidentifier> = var45
+<varidentifier> = var46
+<varidentifier> = var47
+<varidentifier> = var48
+<varidentifier> = var49
+<varidentifier> = var50
+<varidentifier> = var51
+<varidentifier> = var52
+<varidentifier> = var53
+<varidentifier> = var54
+<varidentifier> = var55
+<varidentifier> = var56
+<varidentifier> = var57
+<varidentifier> = var58
+<varidentifier> = var59
+<varidentifier> = var60
+<varidentifier> = var61
+<varidentifier> = var62
+<varidentifier> = var63
+<varidentifier> = var64
+<varidentifier> = var65
+<varidentifier> = var66
+<varidentifier> = var67
+<varidentifier> = var68
+<varidentifier> = var69
+<varidentifier> = var70
+<varidentifier> = var71
+<varidentifier> = var72
+<varidentifier> = var73
+<varidentifier> = var74
+<varidentifier> = var75
+<varidentifier> = var76
+<varidentifier> = var77
+<varidentifier> = var78
+<varidentifier> = var79
+<varidentifier> = var80
+<varidentifier> = var81
+<varidentifier> = var82
+<varidentifier> = var83
+<varidentifier> = var84
+<varidentifier> = var85
+<varidentifier> = var86
+<varidentifier> = var87
+<varidentifier> = var88
+<varidentifier> = var89
+<varidentifier> = var90
+<varidentifier> = var91
+<varidentifier> = var92
+<varidentifier> = var93
+<varidentifier> = var94
+<varidentifier> = var95
+<varidentifier> = var96
+<varidentifier> = var97
+<varidentifier> = var98
+<varidentifier> = var99
+
+<smallvaridentifier> = var00
+<smallvaridentifier> = var01
+<smallvaridentifier> = var02
+<smallvaridentifier> = var03
+<smallvaridentifier> = var04
+<smallvaridentifier> = var05
+<smallvaridentifier> = var06
+<smallvaridentifier> = var07
+<smallvaridentifier> = var08
+<smallvaridentifier> = var09
+
+<identifier> = <smallvaridentifier>
+<identifier> = <varidentifier>
+<identifier> = <builtinidentifier>
+
+<labelidentifier> = label0
+<labelidentifier> = label1
+<labelidentifier> = label2
+<labelidentifier> = label3
+<labelidentifier> = label4
+<labelidentifier> = label5
+<labelidentifier> = label6
+<labelidentifier> = label7
+<labelidentifier> = label8
+<labelidentifier> = label9
+
+<numericliteral> = 0
+<numericliteral> = 1
+<numericliteral> = <digit>
+<numericliteral> = 13.37
+<numericliteral> = 1.79769e+308
+<numericliteral> = 9007199254740991
+<numericliteral> = 9007199254740992
+<numericliteral> = 0xffffffff
+<numericliteral> = 0x80000000
+<numericliteral> = 0x7fffffff
+<numericliteral> = 0x40000000
+<numericliteral> = 0x3fffffff
+<numericliteral> = 1000
+<numericliteral> = -0
+<numericliteral> = Infinity
+<numericliteral> = Nan
+<numericliteral> = -<numericliteral>
+
+<regularexpressionliteral> = /ab+c/
+
+<stringliteral> = "abc"
+
+<templateliteral> = `abc`
+<templateliteral> = `ab${<expression>}c`
+
+# Statements
+
+<statementlist> = <repeat_statement>
+
+<statement> = <lexicaldeclaration>
+<statement> = <lexicaldeclaration>
+<statement> = <lexicaldeclaration>
+<statement> = <lexicaldeclaration>
+<statement> = <variablestatement>
+<statement> = <variablestatement>
+<statement> = <variablestatement>
+<statement> = <variablestatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <expressionstatement>
+<statement> = <otherstatement>
+
+<otherstatement> = <blockstatement>
+<otherstatement> = <emptystatement>
+<otherstatement> = <ifstatement>
+<otherstatement> = <breakablestatement>
+<otherstatement> = <continuestatement>
+<otherstatement> = <breakstatement>
+<otherstatement> = <returnstatement>
+<otherstatement> = <withstatement>
+<otherstatement> = <labelledstatement>
+<otherstatement> = <throwstatement>
+<otherstatement> = <trystatement>
+<otherstatement> = <declaration>
+<otherstatement> = <jitstatement>
+# <statement> = <debuggerstatement>
+
+<breakstatement> = break;<crlf>
+<breakstatement> = break <labelidentifier>;<crlf>
+
+<declaration> = <classdeclaration>
+<declaration> = <classdeclaration>
+<declaration> = <classdeclaration>
+<declaration> = <functiondeclaration>
+<declaration> = <functiondeclaration>
+<declaration> = <functiondeclaration>
+<declaration> = <generatordeclaration>
+<declaration> = <asyncfunctiondeclaration>
+<declaration> = <asyncgeneratordeclaration>
+
+<breakablestatement> = <iterationstatement>
+<breakablestatement> = <switchstatement>
+
+<blockstatement> = {<crlf> <statementlist> }<crlf>
+
+<lexicaldeclaration> = <letorconst> <bindinglist>;<crlf>
+
+<letorconst> = 
+<letorconst> = let
+<letorconst> = const
+
+<bindinglist> = <lexicalbinding>
+<bindinglist> = <bindinglist>, <lexicalbinding>
+
+<lexicalbinding> = <bindingidentifier>
+<lexicalbinding> = <bindingidentifier>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingidentifier> <initializer>
+<lexicalbinding> = <bindingpattern> <initializer>
+
+<variablestatement> = var <variabledeclarationlist>;<crlf>
+
+<variabledeclarationlist> = <variabledeclaration>
+<variabledeclarationlist> = <variabledeclarationlist>, <variabledeclaration>
+
+<variabledeclaration> = <bindingidentifier>
+<variabledeclaration> = <bindingidentifier>
+<variabledeclaration> = <bindingidentifier>
+<variabledeclaration> = <bindingidentifier>
+<variabledeclaration> = <bindingidentifier>
+<variabledeclaration> = <bindingidentifier> <initializer>
+<variabledeclaration> = <bindingidentifier> <initializer>
+<variabledeclaration> = <bindingidentifier> <initializer>
+<variabledeclaration> = <bindingidentifier> <initializer>
+<variabledeclaration> = <bindingidentifier> <initializer>
+<variabledeclaration> = <bindingpattern> <initializer>
+
+<bindingpattern> = <objectbindingpattern>
+<bindingpattern> = <arraybindingpattern>
+
+<objectbindingpattern> = {}
+<objectbindingpattern> = { <bindingrestproperty> }
+<objectbindingpattern> = { <bindingpropertylist> }
+<objectbindingpattern> = { <bindingpropertylist> }
+<objectbindingpattern> = { <bindingpropertylist> }
+<objectbindingpattern> = { <bindingpropertylist> }
+<objectbindingpattern> = { <bindingpropertylist> }
+<objectbindingpattern> = { <bindingpropertylist> }
+<objectbindingpattern> = { <bindingpropertylist>, <bindingrestproperty> }
+
+<arraybindingpattern> = []
+<arraybindingpattern> = [ <elison> <bindingrestelement> ]
+<arraybindingpattern> = [ <bindingelementlist> ]
+<arraybindingpattern> = [ <bindingelementlist> ]
+<arraybindingpattern> = [ <bindingelementlist> ]
+<arraybindingpattern> = [ <bindingelementlist> ]
+<arraybindingpattern> = [ <bindingelementlist> ]
+<arraybindingpattern> = [ <bindingelementlist> ]
+<arraybindingpattern> = [ <bindingelementlist>, <elison> <bindingrestelement> ]
+
+<bindingrestproperty> = ...<bindingidentifier>
+
+<bindingpropertylist> = <bindingproperty>
+<bindingpropertylist> = <bindingpropertylist>, <bindingproperty>
+
+<bindingelementlist> = <bindingelisonelement>
+<bindingelementlist> = <bindingelementlist>, <bindingelisonelement>
+
+<bindingelisonelement> = <elison> <bindingelement>
+<bindingelisonelement> = <bindingelement>
+<bindingelisonelement> = <bindingelement>
+<bindingelisonelement> = <bindingelement>
+<bindingelisonelement> = <bindingelement>
+<bindingelisonelement> = <bindingelement>
+<bindingelisonelement> = <bindingelement>
+<bindingelisonelement> = <bindingelement>
+
+<bindingproperty> = <singlenamebinding>
+<bindingproperty> = <propertyname> : <bindingelement>
+<bindingproperty> = <propertyname> : <bindingelement>
+<bindingproperty> = <propertyname> : <bindingelement>
+<bindingproperty> = <propertyname> : <bindingelement>
+<bindingproperty> = <propertyname> : <bindingelement>
+
+<bindingelement> = <singlenamebinding>
+<bindingelement> = <singlenamebinding>
+<bindingelement> = <singlenamebinding>
+<bindingelement> = <singlenamebinding>
+<bindingelement> = <singlenamebinding>
+<bindingelement> = <singlenamebinding>
+<bindingelement> = <bindingpattern>
+<bindingelement> = <bindingpattern> <initializer>
+
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingidentifier>
+<bindingrestelement> = ...<bindingpattern>
+
+<emptystatement> = ;<crlf>
+
+<expressionstatement> = <expression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+<expressionstatement> = <assignmentexpression>;<crlf>
+
+<ifstatement> = if(<expression>) <statementorblock> else <statementorblock>
+<ifstatement> = if(<expression>) <statementorblock> 
+
+<iterationstatement> = <dowhilestatement>
+<iterationstatement> = <whilestatement>
+<iterationstatement> = <forstatement>
+<iterationstatement> = <forinofstatement>
+
+<dowhilestatement> = do <statementorblock> while ( <expression> );<crlf>
+
+<whilestatement> = while ( <expression> ) <statementorblock>
+
+<forstatement> = for(<optexpression> ; <optexpression> ; <optexpression>) <statementorblock>
+<forstatement> = for(var <variabledeclarationlist> ; <optexpression> ; <optexpression>) <statementorblock>
+<forstatement> = for(<lexicaldeclaration> <optexpression> ; <optexpression>) <statementorblock>
+
+<optexpression> = 
+<optexpression> = <expression>
+<optexpression> = <expression>
+<optexpression> = <expression>
+
+<forinofstatement> = for ( <lefthandsideexpression> in <expression> ) <statementorblock>
+<forinofstatement> = for ( var <forbinding> in <expression> ) <statementorblock>
+<forinofstatement> = for ( <fordeclaration> in <expression> ) <statementorblock>
+<forinofstatement> = for ( <lefthandsideexpression> of <expression> ) <statementorblock>
+<forinofstatement> = for ( var <forbinding> of <expression> ) <statementorblock>
+<forinofstatement> = for ( <fordeclaration> of <expression> ) <statementorblock>
+<forinofstatement> = for await ( <lefthandsideexpression> of <expression> ) <statementorblock>
+<forinofstatement> = for await ( var <forbinding> of <expression> ) <statementorblock>
+<forinofstatement> = for await ( <fordeclaration> of <expression> ) <statementorblock>
+
+<statementorblock> = <statement>
+<statementorblock> = <blockstatement>
+
+<fordeclaration> = <letorconst> <forbinding>
+
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingidentifier>
+<forbinding> = <bindingpattern>
+
+<continuestatement> = continue;<crlf>
+<continuestatement> = continue <labelidentifier>;<crlf>
+
+<returnstatement> = return;<crlf>
+<returnstatement> = return <expression>;<crlf>
+
+<withstatement> = with ( <expression> ) <statementorblock>
+
+<switchstatement> = switch ( <expression> ) <caseblock>
+
+<caseblock> = {<crlf> <caseclauses> }<crlf>
+<caseblock> = {<crlf> <caseclauses> <defaultclause> }<crlf>
+
+<caseclauses> = <repeat_caseclause>
+
+<caseclause> = case <expression> : <statementlist>
+
+<defaultclause> = default : <statementlist>
+
+<labelledstatement> = <labelidentifier> : <labelleditem>
+
+<labelleditem> = <statement>
+<labelleditem> = <functiondeclaration>
+
+<throwstatement> = throw <expression>;<crlf>
+
+<trystatement> = try <blockstatement> <catch>
+<trystatement> = try <blockstatement> <finally>
+<trystatement> = try <blockstatement> <catch> <finally>
+
+<catch> = catch (<catchparameter>) <blockstatement>
+<catch> = catch <blockstatement>
+
+<finally> = finally <blockstatement>
+
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingidentifier>
+<catchparameter> = <bindingpattern>
+
+# <debuggerstatement> = debugger;<crlf>
+
+
+# Functions and Classes
+
+<formalparameters> = 
+<formalparameters> = 
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <functionrestparameter>
+<formalparameters> = <formalparameterlist>
+<formalparameters> = <formalparameterlist>, <functionrestparameter>
+
+<formalparameterlist> = <formalparameter>
+<formalparameterlist> = <formalparameterlist>, <formalparameter>
+
+<functionrestparameter> = <bindingrestelement>
+
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <identifier>
+<formalparameter> = <bindingelement>
+
+<functiondeclaration> = function <bindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<functiondeclaration> = function (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<functionexpression> = function <optbindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<optbindingidentifier> = 
+<optbindingidentifier> = <bindingidentifier>
+
+<arrowfunction> = <arrowparameters> => {<crlf> <statementlist> }<crlf>
+
+<arrowparameters> = <bindingidentifier>
+<arrowparameters> = <bindingidentifier>
+<arrowparameters> = <bindingidentifier>
+<arrowparameters> = <bindingidentifier>
+<arrowparameters> = <bindingidentifier>
+<arrowparameters> = <bindingidentifier>
+<arrowparameters> = <coverparenthesizedexpressionandarrowparameterlist>
+
+<expressionbody> = <assignmentexpression>
+
+<arrowformalparameters> = (<formalparameters>)
+
+<asyncarrowfunction> = async <bindingidentifier> => <asyncconcisebody>
+<asyncarrowfunction> = <covercallexpressionandasyncarrowhead>  => <asyncconcisebody>
+
+<asyncconcisebody> = {<crlf> <statementlist> }<crlf>
+<asyncconcisebody> = {<crlf> <statementlist> }<crlf>
+<asyncconcisebody> = {<crlf> <statementlist> }<crlf>
+<asyncconcisebody> = {<crlf> <statementlist> }<crlf>
+<asyncconcisebody> = {<crlf> <statementlist> }<crlf>
+<asyncconcisebody> = <expressionbody>
+
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <memberexpression><arguments>
+<covercallexpressionandasyncarrowhead> = <asyncarrowhead>
+
+<asyncarrowhead> = async <arrowformalparameters>
+
+<methoddefinition> = <propertyname> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<methoddefinition> = <propertyname> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<methoddefinition> = <propertyname> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<methoddefinition> = get <propertyname> () {<crlf> <statementlist> }<crlf>
+<methoddefinition> = get <propertyname> () {<crlf> <statementlist> }<crlf>
+<methoddefinition> = get <propertyname> () {<crlf> <statementlist> }<crlf>
+<methoddefinition> = set <propertyname> (<formalparameter>) {<crlf> <statementlist> }<crlf>
+<methoddefinition> = set <propertyname> (<formalparameter>) {<crlf> <statementlist> }<crlf>
+<methoddefinition> = set <propertyname> (<formalparameter>) {<crlf> <statementlist> }<crlf>
+<methoddefinition> = <generatormethod>
+<methoddefinition> = <asyncmethod>
+<methoddefinition> = <asyncgeneratormethod>
+
+<generatormethod> = * <propertyname> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<generatordeclaration> = function * <bindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<generatordeclaration> = function * (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<generatorexpression> = function * <optbindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<yieldexpression> = yield
+<yieldexpression> = yield <expression>
+<yieldexpression> = yield <assignmentexpression>
+<yieldexpression> = yield * <expression>
+<yieldexpression> = yield * <assignmentexpression>
+
+<asyncgeneratormethod> = async * <propertyname> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<asyncgeneratordeclaration> = async function * <bindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<asyncgeneratordeclaration> = async function * (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<asyncgeneratorexpression> = async function * <optbindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<asyncfunctiondeclaration> = async function <bindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+<asyncfunctiondeclaration> = async function (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<asyncfunctionexpression> = async function <optbindingidentifier> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<asyncmethod> = async <propertyname> (<formalparameters>) {<crlf> <statementlist> }<crlf>
+
+<awaitexpression> = await <expression>
+
+<classdeclaration> = class <bindingidentifier> <classtail>
+<classdeclaration> = class <classtail>
+
+<classexpression> = class <bindingidentifier> <classtail>
+
+<classtail> = <classheritage> {<crlf> <classbody> }<crlf>
+
+<classheritage> = 
+<classheritage> = 
+<classheritage> = extends <lefthandsideexpression>
+
+<classbody> = <classelement><repeat_classelement>
+
+<classelement> = <methoddefinition>
+<classelement> = <methoddefinition>
+<classelement> = <methoddefinition>
+<classelement> = <methoddefinition>
+<classelement> = <methoddefinition>
+<classelement> = static <methoddefinition>
+<classelement> = ;
+
+# Expressions
+
+<singlenamebinding> = <identifier>
+<singlenamebinding> = <identifier>
+<singlenamebinding> = <identifier>
+<singlenamebinding> = <identifier> <initializer>
+
+<bindingidentifier> = <identifier>
+
+<primaryexpression> = this
+<primaryexpression> = this
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <identifier>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <literal>
+<primaryexpression> = <arrayliteral>
+<primaryexpression> = <arrayliteral>
+<primaryexpression> = <arrayliteral>
+<primaryexpression> = <arrayliteral>
+<primaryexpression> = <objectliteral>
+<primaryexpression> = <objectliteral>
+<primaryexpression> = <objectliteral>
+<primaryexpression> = <objectliteral>
+<primaryexpression> = <otherprimaryexpression>
+
+<otherprimaryexpression> = <functionexpression>
+<otherprimaryexpression> = <classexpression>
+<otherprimaryexpression> = <generatorexpression>
+<otherprimaryexpression> = <asyncfunctionexpression>
+<otherprimaryexpression> = <asyncgeneratorexpression>
+<otherprimaryexpression> = <regularexpressionliteral>
+<otherprimaryexpression> = <templateliteral>
+<otherprimaryexpression> = <coverparenthesizedexpressionandarrowparameterlist>
+
+<coverparenthesizedexpressionandarrowparameterlist> = (<expression>)
+<coverparenthesizedexpressionandarrowparameterlist> = (<expression>)
+<coverparenthesizedexpressionandarrowparameterlist> = (<expression>)
+<coverparenthesizedexpressionandarrowparameterlist> = (<expression>,)
+<coverparenthesizedexpressionandarrowparameterlist> = ()
+<coverparenthesizedexpressionandarrowparameterlist> = (...<bindingidentifier>)
+<coverparenthesizedexpressionandarrowparameterlist> = (...<bindingpattern>)
+<coverparenthesizedexpressionandarrowparameterlist> = (<expression>, ...<bindingidentifier>)
+<coverparenthesizedexpressionandarrowparameterlist> = (<expression>, ...<bindingpattern>)
+
+<booleanliteral> = true
+<booleanliteral> = false
+
+<literal> = null
+<literal> = <booleanliteral>
+<literal> = <numericliteral>
+<literal> = <numericliteral>
+<literal> = <numericliteral>
+<literal> = <numericliteral>
+<literal> = <numericliteral>
+<literal> = <stringliteral>
+
+<arrayliteral> = []
+<arrayliteral> = []
+<arrayliteral> = [<elison>]
+<arrayliteral> = [<elementlist>]
+<arrayliteral> = [<elementlist>]
+<arrayliteral> = [<elementlist>]
+<arrayliteral> = [<elementlist>]
+<arrayliteral> = [<elementlist>, <elison>]
+
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+<elementlist> = <elementlist>, <expression>
+
+<elementlist> = <elison><expression>
+<elementlist> = <elison><spreadelement>
+<elementlist> = <elementlist>,<elison><expression>
+<elementlist> = <elementlist>,<elison><spreadelement>
+<elementlist> = <expression>
+<elementlist> = <spreadelement>
+<elementlist> = <elementlist>,<expression>
+<elementlist> = <elementlist>,<spreadelement>
+
+<elison> = 
+<elison> = ,
+<elison> = <elison>,
+
+<spreadelement> = ...<expression>
+
+<objectliteral> = {}
+<objectliteral> = {}
+<objectliteral> = {<propertydefinitionlist>}
+<objectliteral> = {<propertydefinitionlist>}
+<objectliteral> = {<propertydefinitionlist>}
+<objectliteral> = {<propertydefinitionlist>,}
+
+<propertydefinitionlist> = <propertydefinition>
+<propertydefinitionlist> = <propertydefinitionlist>, <propertydefinition>
+
+<propertydefinition> = <identifier>
+<propertydefinition> = <coverinitializedname>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <propertyname> : <expression>
+<propertydefinition> = <methoddefinition>
+<propertydefinition> = ...<expression>
+<propertydefinition> = ...<expression>
+
+<propertyname> = <identifier>
+<propertyname> = <identifier>
+<propertyname> = <identifier>
+<propertyname> = <identifier>
+<propertyname> = <identifier>
+<propertyname> = <identifier>
+<propertyname> = <identifier>
+<propertyname> = <literalpropertyname>
+<propertyname> = <computedpropertyname>
+
+<literalpropertyname> = <identifier>
+<literalpropertyname> = <stringliteral>
+<literalpropertyname> = <numericliteral>
+
+<computedpropertyname> = [<expression>]
+
+<coverinitializedname> = <identifier> <initializer>
+
+<initializer> = = <expression>
+
+<memberexpression> = <primaryexpression>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <identifier>
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>[<expression>]
+<memberexpression> = <memberexpression>.<identifier>
+<memberexpression> = <memberexpression>.<identifier>
+<memberexpression> = <memberexpression>.<identifier>
+<memberexpression> = <memberexpression>.<identifier>
+<memberexpression> = <memberexpression>.<identifier>
+<memberexpression> = <memberexpression>.<identifier>
+<memberexpression> = <memberexpression><templateliteral>
+<memberexpression> = <superproperty>
+<memberexpression> = <metaproperty>
+<memberexpression> = new <memberexpression><arguments>
+<memberexpression> = new <memberexpression><arguments>
+<memberexpression> = new <memberexpression><arguments>
+<memberexpression> = <memberexpression><arguments>
+<memberexpression> = <memberexpression><arguments>
+<memberexpression> = <memberexpression><arguments>
+<memberexpression> = <memberexpression><arguments>
+<memberexpression> = <memberexpression><arguments>
+<memberexpression> = <memberexpression><arguments>
+
+<superproperty> = super[<expression>]
+<superproperty> = super.<identifier>
+
+<metaproperty> = new.target
+<metaproperty> = import.meta
+
+<newexpression> = <memberexpression>
+<newexpression> = <memberexpression>
+<newexpression> = <memberexpression>
+<newexpression> = new <newexpression>
+
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <covercallexpressionandasyncarrowhead>
+<callexpression> = <supercall>
+<callexpression> = <importcall>
+<callexpression> = <callexpression><arguments>
+<callexpression> = <callexpression>[<expression>]
+<callexpression> = <callexpression>.<identifier>
+<callexpression> = <callexpression><templateliteral>
+
+<supercall> = super<arguments>
+<importcall> = import(<assignmentexpression>)
+
+<arguments> = ()
+<arguments> = (<argumentlist>)
+<arguments> = (<argumentlist>)
+<arguments> = (<argumentlist>)
+<arguments> = (<argumentlist>)
+<arguments> = (<argumentlist><elison>)
+
+<argumentlist> = <expression>
+<argumentlist> = <expression>
+<argumentlist> = <expression>
+<argumentlist> = <expression>
+<argumentlist> = <expression>
+<argumentlist> = <expression>
+<argumentlist> = <argumentlist>, <expression>
+<argumentlist> = <argumentlist>, <expression>
+<argumentlist> = <argumentlist>, <expression>
+<argumentlist> = <argumentlist>, <expression>
+<argumentlist> = <argumentlist>, <expression>
+<argumentlist> = <argumentlist>, <expression>
+<argumentlist> = ...<expression>
+<argumentlist> = <argumentlist>, ...<expression>
+
+<optionalexpression> = <memberexpression><optionalchain>
+<optionalexpression> = <callexpression><optionalchain>
+<optionalexpression> = <optionalexpression><optionalchain>
+
+<optionalchain> = ?.<arguments>
+<optionalchain> = ?.[<expression>]
+<optionalchain> = ?.<identifier>
+<optionalchain> = ?.<templateliteral>
+<optionalchain> = ?.<arguments>
+<optionalchain> = ?.[<expression>]
+<optionalchain> = ?.<identifier>
+<optionalchain> = ?.<templateliteral>
+<optionalchain> = <optionalchain><arguments>
+<optionalchain> = <optionalchain>[<expression>]
+<optionalchain> = <optionalchain>.<identifier>
+<optionalchain> = <optionalchain><templateliteral>
+
+#added for greater probability of sensible output
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+<lefthandsideexpression> = <memberexpression>
+
+<lefthandsideexpression> = <newexpression>
+<lefthandsideexpression> = <callexpression>
+<lefthandsideexpression> = <optionalexpression>
+
+<operation> = <lefthandsideexpression>
+<operation> = <lefthandsideexpression>++
+<operation> = <lefthandsideexpression>--
+<operation> = ++<expression>
+<operation> = --<expression>
+
+<operation> = delete <expression>
+<operation> = void <expression>
+<operation> = typeof <expression>
+<operation> = +<expression>
+<operation> = -<expression>
+<operation> = ~<expression>
+<operation> = !<expression>
+
+<operation> = <expression>**<expression>
+
+<operation> = <expression>*<expression>
+<operation> = <expression>/<expression>
+<operation> = <expression>%<expression>
+
+<operation> = <expression>+<expression>
+<operation> = <expression>-<expression>
+
+<operation> = <expression><lt><lt><expression>
+<operation> = <expression><gt><gt><expression>
+<operation> = <expression><gt><gt><gt><expression>
+
+<operation> = <expression><lt><expression>
+<operation> = <expression><gt><expression>
+<operation> = <expression><lt>=<expression>
+<operation> = <expression><gt>=<expression>
+<operation> = <expression> instanceof <expression>
+<operation> = <expression> in <expression>
+
+<operation> = <expression> == <expression>
+<operation> = <expression> != <expression>
+<operation> = <expression> === <expression>
+<operation> = <expression> !== <expression>
+
+<operation> = <expression> & <expression>
+<operation> = <expression> | <expression>
+<operation> = <expression> ^ <expression>
+
+<operation> = <expression> && <expression>
+<operation> = <expression> || <expression>
+<operation> = <expression> ?? <expression>
+
+<operation> = <expression> ? <expression> : <expression>
+
+<operation> = <yieldexpression>
+<operation> = <arrowfunction>
+<operation> = <asyncarrowfunction>
+<operation> = <lefthandsideexpression> = <expression>
+<operation> = <lefthandsideexpression> <assignmentoperator> <expression>
+
+<operation> = <expression>, <expression>
+
+<operation> = <awaitexpression>
+
+<assignmentoperator> = *=
+<assignmentoperator> = /=
+<assignmentoperator> = %=
+<assignmentoperator> = +=
+<assignmentoperator> = -=
+<assignmentoperator> = <lt><lt>=
+<assignmentoperator> = >>=
+<assignmentoperator> = >>>=
+<assignmentoperator> = &=
+<assignmentoperator> = ^=
+<assignmentoperator> = |=
+<assignmentoperator> = **=
+<assignmentoperator> = &&=
+<assignmentoperator> = ||=
+<assignmentoperator> = ??=
+
+<assignmentexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> = <expression>
+<assignmentexpression> = <lefthandsideexpression> <assignmentoperator> <expression>
+
+# added
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <primaryexpression>
+<expression> = <memberexpression>
+<expression> = <memberexpression>
+<expression> = <memberexpression>
+<expression> = <callexpression>
+<expression> = (<operation>)
+<expression> = (<operation>)
+<expression> = (<operation>)
+<expression> = <operation>
+<expression> = <operation>
+<expression> = <operation>
+
+# TODO scripts and modules
+
+# Some additions:
+
+<typedarray> = Int8Array
+<typedarray> = Uint8Array
+<typedarray> = Int16Array
+<typedarray> = Uint16Array
+<typedarray> = Int32Array
+<typedarray> = Uint32Array
+<typedarray> = Float32Array
+<typedarray> = Float64Array
+<typedarray> = BigInt64Array
+<typedarray> = BigUint64Array
+
+<primaryexpression> = new <typedarray>(<digit>)
+
+<simplifiedarguments> = ()
+<simplifiedarguments> = (<simplifiedargumentlist>)
+
+<simplifiedargumentlist> = <primaryexpression>
+<simplifiedargumentlist> = <primaryexpression>, <simplifiedargumentlist>
+
+<expression> = <identifier>.<builtinidentifier><simplifiedarguments>
+<otherstatement> = <identifier>.<builtinidentifier> = <functionexpression>;<crlf>
+<otherstatement> = <identifier> = <calleeobjectorempty><builtinidentifier><simplifiedarguments>;<crlf>
+
+<statementlistorempty> = 
+<statementlistorempty> = <statementlist>
+
+<calleeobjectorempty> = 
+<calleeobjectorempty> = <identifier>.
+<calleeobjectorempty> = <identifier>.
+<calleeobjectorempty> = <identifier>.
+<calleeobjectorempty> = <identifier>.
+
+<jitstatement> = for(var i=0; i<lt>(<jittreshold> + 1); i++) {<crlf><statementlist> if(i==<jittreshold>) {<crlf><statementlist>}<crlf><statementlist><crlf>}<crlf>
+<jitstatement> = <jitfunctiondeclaration><calljitloop><statementlistorempty><calljit>
+<jitfunctiondeclaration> = function jit_f(<identifier>, <identifier>, <identifier>, jitparam) {<crlf><statementlistorempty>if(jitparam) {<crlf><statementlistorempty>}<crlf><statementlistorempty>}<crlf>
+<calljitloop> = for(var i=0; i<lt><jittreshold>; i++) jit_f(<primaryexpression>,<primaryexpression>,<primaryexpression>,false);<crlf>
+<calljit> = jit_f(<primaryexpression>,<primaryexpression>,<primaryexpression>,true);<crlf>
+
+# v8 specific
+# <jitstatement> = <jitfunctiondeclaration>%PrepareFunctionForOptimization(jit_f);<crlf>for(var i=0; i<lt>10; i++) jit_f(<primaryexpression>,<primaryexpression>,<primaryexpression>,false);<crlf><statementlistorempty>%OptimizeFunctionOnNextCall(jit_f);<crlf><calljit>
+

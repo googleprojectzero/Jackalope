@@ -17,12 +17,16 @@ limitations under the License.
 #include "common.h"
 #include "fuzzer.h"
 #include "mutator.h"
+#include "mutators/grammar/grammar.h"
+#include "mutators/grammar/grammarmutator.h"
+#include "mutators/grammar/grammarminimizer.h"
 
-class MyFuzzer : public Fuzzer {
+
+class BinaryFuzzer : public Fuzzer {
   Mutator *CreateMutator(int argc, char **argv, ThreadContext *tc) override;
 };
 
-Mutator *MyFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) {
+Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) {
   // a pretty simple non-deterministic mutation strategy
 
   PSelectMutator *pselect = new PSelectMutator();
@@ -50,9 +54,61 @@ Mutator *MyFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) {
   return mutator;
 }
 
+class GrammarFuzzer : public Fuzzer {
+public:
+  GrammarFuzzer(const char *grammar_file);
+protected:
+  Grammar grammar;
+  Mutator* CreateMutator(int argc, char** argv, ThreadContext* tc) override;
+  Minimizer* CreateMinimizer(int argc, char** argv, ThreadContext* tc) override;
+  bool OutputFilter(Sample* original_sample, Sample* output_sample) override;
+
+  bool IsReturnValueInteresting(uint64_t return_value) override;
+};
+
+GrammarFuzzer::GrammarFuzzer(const char* grammar_file) {
+  if (!grammar.Read(grammar_file)) {
+    FATAL("Error reading grammar");
+  }
+}
+
+Mutator* GrammarFuzzer::CreateMutator(int argc, char** argv, ThreadContext* tc) {
+  GrammarMutator* grammar_mutator = new GrammarMutator(&grammar);
+
+  NRoundMutator* mutator = new NRoundMutator(grammar_mutator, 20);
+
+  return mutator;
+}
+
+Minimizer* GrammarFuzzer::CreateMinimizer(int argc, char** argv, ThreadContext* tc) {
+  return new GrammarMinimizer(&grammar);
+}
+
+bool GrammarFuzzer::OutputFilter(Sample* original_sample, Sample* output_sample) {
+  uint64_t string_size = *((uint64_t*)original_sample->bytes);
+  if (original_sample->size < (string_size + sizeof(string_size))) {
+    FATAL("Incorrectly encoded grammar sample");
+  }
+
+  output_sample->Init(original_sample->bytes + sizeof(string_size), string_size);
+  return true;
+}
+
+bool GrammarFuzzer::IsReturnValueInteresting(uint64_t return_value) {
+  return (return_value == 0);
+}
+
 int main(int argc, char **argv)
 {
-  MyFuzzer fuzzer;
-  fuzzer.Run(argc, argv);
+  Fuzzer* fuzzer;
+
+  char* grammar = GetOption("-grammar", argc, argv);
+  if (grammar) {
+    fuzzer = new GrammarFuzzer(grammar);
+  } else {
+    fuzzer = new BinaryFuzzer();
+  }
+
+  fuzzer->Run(argc, argv);
   return 0;
 }
