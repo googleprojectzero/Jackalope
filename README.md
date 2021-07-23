@@ -172,6 +172,10 @@ A: I recommend using special allocators provided by the operating system itself 
  - On Windows: You can use [Page Heap](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/gflags-and-pageheap). Specifically, you can use `gflags.exe /i <target_executable> +hpa` (Note: needs to be called as an administrator) to enable page heap for your target process.
  - On macOS: You can use [Guard Malloc](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/Articles/MallocDebug.html) although note that its support in TinyInst is experimental and additional workarounds might be required. See [this page](https://github.com/googleprojectzero/TinyInst/tree/master/macOS#tinyinst-and-guard-malloc) for more information.
 
+Q: I'm getting an error about "Process hanged before reaching the target method"
+
+A: Use the `-t1` flag to set/increase the initialization timeout.
+
 ## Disclaimer
 
 This is not an official Google product.
