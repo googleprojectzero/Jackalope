@@ -4,6 +4,10 @@ Jackalope supports sample generation and subsequent mutation based on a simple g
 
 To use grammar-based generation/mutation, simply add `-grammar <path/to/grammar/file>` to the Jackalope command line.
 
+Note that, by default, in grammar fuzzing mode, Jackalope will only consider a sample "interesting" if the return value for that sample (either the return value of the target function or the value passed to `__post_fuzz()`) is zero. Non-zero values can be used to indicate syntax or other parsing errors. This behavior can be seen (and changed) in [GrammarFuzzer::IsReturnValueInteresting](https://github.com/googleprojectzero/Jackalope/blob/aa6c890a1b9bc9fb011abc0b15992cb0f0510bbe/main.cpp#L98).
+
+## Grammar syntax
+
 The grammar file is parsed line by line, where each line contains one grammar rule. Everything after a `#` character is considered a comment. A grammar rule should be given in the following form:
 
 ```
