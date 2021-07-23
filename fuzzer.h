@@ -44,6 +44,8 @@ class CoverageClient;
 #define CRASH_REPRODUCE_TIMES 10
 #define SAMPLE_RETRY_TIMES 10
 
+#define DELIVERY_RETRY_TIMES 100
+
 #define MAX_IDENTICAL_CRASHES 4
 
 // save state every 5 minutes

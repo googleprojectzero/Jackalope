@@ -212,7 +212,22 @@ RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Cov
   if (!tc->sampleDelivery->DeliverSample(sample)) {
     WARN("Error delivering sample, retrying with a clean target");
     tc->instrumentation->CleanTarget();
-    if (!tc->sampleDelivery->DeliverSample(sample)) {
+    bool delivery_successful = false;
+    for (int retry = 0; retry < DELIVERY_RETRY_TIMES; retry++) {
+      if (tc->sampleDelivery->DeliverSample(sample)) {
+        WARN("Sample delivery completed successfully after %d retries\n", (retry + 1));
+        delivery_successful = true;
+        break;
+      } else {
+        WARN("Repeatedly failed to deliver sample, retrying after delay");
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+        Sleep(1000);
+#else
+        usleep(1000000);
+#endif
+      }
+    }
+    if (!delivery_successful) {
       FATAL("Repeatedly failed to deliver sample");
     }
   }
