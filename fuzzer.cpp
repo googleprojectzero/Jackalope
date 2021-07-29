@@ -660,6 +660,17 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
   }
 }
 
+void Fuzzer::ProcessSample(ThreadContext* tc, FuzzerJob* job) {
+  int has_new_coverage = 0;
+  RunResult result = RunSample(tc, job->sample, &has_new_coverage, false, false, init_timeout, corpus_timeout);
+  if (result == CRASH) {
+    WARN("Input sample resulted in a crash");
+  } else if (result == HANG) {
+    WARN("Input sample resulted in a hang");
+  } else if (!has_new_coverage) {
+    WARN("Input sample has no new stable coverage");
+  }
+}
 
 void Fuzzer::RunFuzzerThread(ThreadContext *tc) {
   while (1) {
@@ -676,7 +687,7 @@ void Fuzzer::RunFuzzerThread(ThreadContext *tc) {
 #endif
       break;
     case PROCESS_SAMPLE:
-      RunSample(tc, job.sample, NULL, false, false, init_timeout, corpus_timeout);
+      ProcessSample(tc, &job);
       break;
     case FUZZ:
       FuzzJob(tc, &job);

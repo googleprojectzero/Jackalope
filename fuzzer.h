@@ -166,6 +166,7 @@ protected:
   void SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job);
   void JobDone(FuzzerJob* job);
   void FuzzJob(ThreadContext* tc, FuzzerJob* job);
+  void ProcessSample(ThreadContext* tc, FuzzerJob* job);
 
   uint64_t num_crashes;
   uint64_t num_unique_crashes;
