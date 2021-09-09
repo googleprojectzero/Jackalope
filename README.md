@@ -162,7 +162,7 @@ A: On macOS, a debugger (Jackalope is acting as a debugger for the target) needs
 Q: I am getting errors/crashes/hangs when running under instrumentation that I'm not getting when running the target normally.
 
 A: These can often be resolved by adding the following flags:
- - Especially if you are getting errors related to custom exceptions or C++ exception processing, these can be resolved by adding `-patch_return_addresses` flag. You can read more about it [here](https://github.com/googleprojectzero/TinyInst#return-address-patching). Warning: `-patch_return_addresses` will have significant performance impact. On Windows, a faster alternative to `-patch_return_addresses` is to fuzz a 32-bit build of your target.
+ - Especially if you are getting errors related to custom exceptions or C++ exception processing, these can be resolved by adding `-patch_return_addresses` or `-generate_unwind` (macOS only for now). You can read more about it [here](https://github.com/googleprojectzero/TinyInst#return-address-patching). Warning: `-patch_return_addresses` will have significant performance impact. On Windows, a faster alternative to `-patch_return_addresses` is to fuzz a 32-bit build of your target. On macOS, `-generate_unwind` is a more performant alternative.
  - Try adding `-stack_offset 0x1000` or another value. This will resolve instrumentation issues with target writing on address lower than the stack pointer (this behavior was obeserved on macOS with leaf functions in some modules).
 
 Q: Getting coverage is nice, but can I also have memory sanitization?
