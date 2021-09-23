@@ -33,7 +33,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
 
   // select one of the mutators below with corresponding
   // probablilities
-  pselect->AddMutator(new ByteFlipMutator(), 1);
+  pselect->AddMutator(new ByteFlipMutator(), 0.8);
+  pselect->AddMutator(new ArithmeticMutator(), 0.2);
   pselect->AddMutator(new AppendMutator(1, 128), 0.2);
   pselect->AddMutator(new BlockInsertMutator(1, 128), 0.1);
   pselect->AddMutator(new BlockFlipMutator(2, 16), 0.1);

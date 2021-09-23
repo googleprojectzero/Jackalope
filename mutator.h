@@ -42,6 +42,16 @@ protected:
   // chunk size is between minblocksize and maxblocksize
   // blockstart and blocksize are return values
   int GetRandBlock(size_t samplesize, size_t minblocksize, size_t maxblocksize, size_t *blockstart, size_t *blocksize, PRNG *prng);
+  
+  template<typename T> T FlipEndian(T value) {
+    T out = 0;
+    for(int i = 0; i<sizeof(T); i++) {
+      out <<= 8;
+      out |= value & 0xFF;
+      value >>= 8;
+    }
+    return out;
+  }
 };
 
 // Mutator that runs another mutator for N rounds
@@ -338,6 +348,14 @@ public:
   bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
 };
 
+class ArithmeticMutator : public Mutator {
+public:
+  bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
+private:
+  template<typename T>
+  bool MutateArithmeticValue(Sample *inout_sample, PRNG *prng, int flip_endian);
+};
+
 class BlockFlipMutator : public Mutator {
 public:
   BlockFlipMutator(int min_block_size, int max_block_size, bool uniform = false):
@@ -400,6 +418,8 @@ class InterstingValueMutator : public Mutator {
 public:
   InterstingValueMutator(bool use_default_values = false);
 
+  template<typename T> void AddDefaultValues();
+  
   void AddInterestingValue(char *data, size_t size);
 
   bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;

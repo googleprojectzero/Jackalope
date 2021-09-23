@@ -37,6 +37,43 @@ bool ByteFlipMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sampl
   return true;
 }
 
+bool ArithmeticMutator::Mutate(Sample *inout_sample,
+                               PRNG *prng,
+                               std::vector<Sample *> &all_samples)
+{
+  int flip_endian = prng->Rand(0, 1);
+  int size = prng->Rand(0, 2);
+  switch(size) {
+    case 0:
+      return MutateArithmeticValue<uint16_t>(inout_sample, prng, flip_endian);
+    case 1:
+      return MutateArithmeticValue<uint32_t>(inout_sample, prng, flip_endian);
+    case 2:
+      return MutateArithmeticValue<uint64_t>(inout_sample, prng, flip_endian);
+  }
+}
+
+template<typename T>
+bool ArithmeticMutator::MutateArithmeticValue(Sample *inout_sample,
+                                              PRNG *prng,
+                                              int flip_endian)
+{
+  T value;
+  size_t blockstart, blocksize;
+  if (!GetRandBlock(inout_sample->size,
+                    sizeof(T), sizeof(T),
+                    &blockstart, &blocksize,
+                    prng))
+    return true;
+  value = *(T *)(inout_sample->bytes + blockstart);
+  if(flip_endian) value = FlipEndian(value);
+  int change = prng->Rand(-256, 256);
+  value += change;
+  if(flip_endian) value = FlipEndian(value);
+  *(T *)(inout_sample->bytes + blockstart) = value;
+  return true;
+}
+
 bool BlockFlipMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   // printf("In BlockFlipMutator::Mutate\n");
   size_t blocksize, blockpos;
@@ -142,32 +179,48 @@ bool InterstingValueMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vecto
 }
 
 InterstingValueMutator::InterstingValueMutator(bool use_default_values) {
-  if (!use_default_values) return;
-  uint16_t i_word;
-  i_word = 0; AddInterestingValue((char *)(&i_word), sizeof(i_word));
-  i_word = 0xFFFF; AddInterestingValue((char *)(&i_word), sizeof(i_word));
-  i_word = 1;
-  for (int i = 0; i < 16; i++) {
-    AddInterestingValue((char *)(&i_word), sizeof(i_word));
-    i_word = (i_word << 1);
-  }
-  uint32_t i_dword;
-  i_dword = 0; AddInterestingValue((char *)(&i_dword), sizeof(i_dword));
-  i_dword = 0xFFFFFFFF; AddInterestingValue((char *)(&i_dword), sizeof(i_dword));
-  i_dword = 1;
-  for (int i = 0; i < 16; i++) {
-    AddInterestingValue((char *)(&i_dword), sizeof(i_dword));
-    i_dword = (i_dword << 1);
-  }
-  uint64_t i_qword;
-  i_qword = 0; AddInterestingValue((char *)(&i_qword), sizeof(i_qword));
-  i_qword = 0xFFFFFFFFFFFFFFFF; AddInterestingValue((char *)(&i_qword), sizeof(i_qword));
-  i_qword = 1;
-  for (int i = 0; i < 16; i++) {
-    AddInterestingValue((char *)(&i_qword), sizeof(i_qword));
-    i_qword = (i_qword << 1);
+  if (use_default_values) {
+    AddDefaultValues<uint16_t>();
+    AddDefaultValues<uint32_t>();
+    AddDefaultValues<uint64_t>();
   }
 }
+
+template<typename T> void InterstingValueMutator::AddDefaultValues() {
+  uint32_t M[] = {2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
+                  56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
+                  136, 144, 152, 160, 168, 176, 184, 192, 200,
+                  208, 216, 224, 232, 240, 248, 256 };
+
+  int32_t N[] = {-1, 0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
+                  56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
+                  136, 144, 152, 160, 168, 176, 184, 192, 200,
+                  208, 216, 224, 232, 240, 248, 256 };
+
+  T value;
+  value = 0;
+  AddInterestingValue((char *)(&value), sizeof(value));
+  value = (T)(-1);
+  AddInterestingValue((char *)(&value), sizeof(value));
+
+  value = 1;
+  for (uint32_t i = 0; i < (sizeof(value) * 8); i++) {
+    AddInterestingValue((char *)(&value), sizeof(value));
+    value = (value << 1);
+  }
+
+  for (uint32_t i = 0; i < (sizeof(M)/sizeof(M[0])); i++) {
+    for (uint32_t j = 0; j < (sizeof(N)/sizeof(N[0])); j++) {
+      int32_t m = M[i];
+      int32_t n = N[j];
+      value = (T)(-1) / m + 1 - n;
+      AddInterestingValue((char *)(&value), sizeof(value));
+      value = FlipEndian(value);
+      AddInterestingValue((char *)(&value), sizeof(value));
+    }
+  }
+}
+
 
 bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   if(all_samples.empty()) return true;
