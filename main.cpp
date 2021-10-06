@@ -75,7 +75,7 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
     
     // do 1000 rounds of derministic mutations, will switch to nondeterministic mutations
     // once deterministic mutator is "done"
-    DtermininsticNondeterministicMutator *mutator = new DtermininsticNondeterministicMutator(deterministic_sequence, 1000, repeater, 0);
+    DtermininsticNondeterministicMutator *mutator = new DtermininsticNondeterministicMutator(deterministic_sequence, 500, repeater, 500);
     return mutator;
   }
 }
