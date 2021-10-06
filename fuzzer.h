@@ -73,6 +73,8 @@ public:
     
     // a thread-local copy of all samples vector
     std::vector<Sample *> all_samples_local;
+    
+    bool coverage_initialized;
 
     ~ThreadContext();
   };
@@ -82,6 +84,7 @@ public:
 protected:
 
   enum FuzzerState {
+    RESTORE_NEEDED,
     INPUT_SAMPLE_PROCESSING,
     SERVER_SAMPLE_PROCESSING,
     GENERATING_SAMPLES,
@@ -98,17 +101,23 @@ protected:
   public:
     SampleQueueEntry() : sample(NULL), context(NULL),
       priority(0), sample_index(0), num_runs(0),
-      num_crashes(0), num_hangs(0), num_newcoverage(0) {}
+      num_crashes(0), num_hangs(0), num_newcoverage(0),
+      discarded(0) {}
 
+    void Save(FILE *fp);
+    void Load(FILE *fp);
+    
     Sample *sample;
+    std::string sample_filename;
     MutatorSampleContext *context;
-    bool context_initialized;
+ 
     double priority;
     uint64_t sample_index;
     uint64_t num_runs;
     uint64_t num_crashes;
     uint64_t num_hangs;
     uint64_t num_newcoverage;
+    int32_t discarded;
   };
   
   struct CmpEntryPtrs
@@ -123,8 +132,9 @@ protected:
   };
 
   std::vector<Sample *> all_samples;
+  std::vector<SampleQueueEntry *> all_entries;
   std::priority_queue<SampleQueueEntry *, std::vector<SampleQueueEntry *>, CmpEntryPtrs> sample_queue;
-
+  
   struct FuzzerJob {
     JobType type;
     union {
@@ -146,11 +156,13 @@ protected:
   virtual Instrumentation *CreateInstrumentation(int argc, char **argv, ThreadContext *tc);
   virtual SampleDelivery* CreateSampleDelivery(int argc, char** argv, ThreadContext* tc);
   virtual Minimizer* CreateMinimizer(int argc, char** argv, ThreadContext* tc);
-  virtual bool OutputFilter(Sample *original_sample, Sample *output_sample);
+  virtual bool OutputFilter(Sample *original_sample, Sample *output_sample, ThreadContext* tc);
   virtual void AdjustSamplePriority(ThreadContext *tc, SampleQueueEntry *entry, int found_new_coverage);
 
   // by default, all return values are interesting
   virtual bool IsReturnValueInteresting(uint64_t return_value) { return true; }
+  
+  virtual bool TrackHotOffsets() { return false; }
 
   void ReplaceTargetCmdArg(ThreadContext *tc, const char *search, const char *replace);
   
@@ -176,8 +188,8 @@ protected:
   uint64_t num_threads;
   uint64_t total_execs;
   
-  void SaveState();
-  void RestoreState();
+  void SaveState(ThreadContext *tc);
+  void RestoreState(ThreadContext *tc);
 
   std::string in_dir;
   std::string out_dir;
@@ -212,10 +224,12 @@ protected:
   double acceptable_hang_ratio;
   double acceptable_crash_ratio;
   
-  double min_priority;
-  
   bool should_restore_state;
   
   Mutex crash_mutex;
   std::unordered_map<std::string, int> unique_crashes;
+  
+  uint64_t last_save_time;
+  
+  SampleTrie sample_trie;
 };

@@ -20,12 +20,22 @@ limitations under the License.
 #include "prng.h"
 #include "sample.h"
 #include "runresult.h"
+#include "mutex.h"
 
-class MutatorSampleContext { };
+#include <vector>
+#include <set>
 
-class SampleContextVector : public MutatorSampleContext {
+#define DETERMINISTIC_MUTATE_BYTES_NEXT 20
+#define DETERMINISTIC_MUTATE_BYTES_PREVIOUS 3
+
+class MutatorSampleContext {
 public:
-  std::vector<MutatorSampleContext *> contexts;
+  virtual ~MutatorSampleContext() {
+    for(MutatorSampleContext * child_context : child_contexts) {
+      delete child_context;
+    }
+  }
+  std::vector<MutatorSampleContext *> child_contexts;
 };
 
 class Mutator {
@@ -33,10 +43,15 @@ public:
   virtual ~Mutator() { }
   virtual MutatorSampleContext *CreateSampleContext(Sample *sample) { return NULL; }
   virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) { }
+  virtual void AddHotOffset(MutatorSampleContext *context, size_t hot_offset) { }
+  virtual void SaveContext(MutatorSampleContext *context, FILE *fp) { };
+  virtual void LoadContext(MutatorSampleContext *context, FILE *fp) { };
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) = 0;
   virtual void NotifyResult(RunResult result, bool has_new_coverage) { }
   virtual bool CanGenerateSample() { return false;  }
   virtual bool GenerateSample(Sample* sample, PRNG* prng) { return false; }
+  virtual void AddMutator(Mutator *mutator) { child_mutators.push_back(mutator); }
+
 protected:
   // a helper function to get a random chunk of sample (with size samplesize)
   // chunk size is between minblocksize and maxblocksize
@@ -52,90 +67,55 @@ protected:
     }
     return out;
   }
+  
+  std::vector<Mutator *> child_mutators;
 };
 
-// Mutator that runs another mutator for N rounds
-class NRoundMutator : public Mutator {
+class HierarchicalMutator : public Mutator {
 public:
-  NRoundMutator(Mutator *child_mutator, size_t num_rounds) {
-    this->child_mutator = child_mutator;
-    this->num_rounds = num_rounds;
-    current_round = 0;
-  }
-
-  virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override {
-    return child_mutator->CreateSampleContext(sample);
-  }
-
-  virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
-    child_mutator->InitRound(input_sample, context);
-    current_round = 0;
-  }
-
-  virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
-    if (current_round == num_rounds) return false;
-    child_mutator->Mutate(inout_sample, prng, all_samples);
-    current_round++;
-    return true;
-  }
-
-  virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
-    child_mutator->NotifyResult(result, has_new_coverage);
-  }
-
-  virtual bool CanGenerateSample() override { return child_mutator->CanGenerateSample(); }
-
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) override { return child_mutator->GenerateSample(sample, prng); }
-
-protected:
-  size_t current_round;
-  size_t num_rounds;
-  Mutator * child_mutator;
-};
-
-// runs input mutators in sequence
-class MutatorSequence : public Mutator {
-public:
-  MutatorSequence() {
-    current_mutator_index = 0;
-  }
-
-  void AddMutator(Mutator *mutator) {
-    child_mutators.push_back(mutator);
-  }
-
   virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
-      child_mutators[i]->InitRound(input_sample, ((SampleContextVector *)context)->contexts[i]);
+      child_mutators[i]->InitRound(input_sample, context->child_contexts[i]);
     }
-    current_mutator_index = 0;
   }
-
-  virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override {
-    SampleContextVector *context = new SampleContextVector;
-    context->contexts.resize(child_mutators.size());
+  
+  void CreateChildContexts(Sample *sample, MutatorSampleContext *context) {
+    context->child_contexts.resize(child_mutators.size());
     for (size_t i = 0; i < child_mutators.size(); i++) {
-      context->contexts[i] = child_mutators[i]->CreateSampleContext(sample);
+      context->child_contexts[i] = child_mutators[i]->CreateSampleContext(sample);
     }
+  }
+  
+  virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override {
+    MutatorSampleContext *context = new MutatorSampleContext;
+    CreateChildContexts(sample, context);
     return context;
   }
-
-  virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
-    while (current_mutator_index < child_mutators.size()) {
-      Mutator *current_mutator = child_mutators[current_mutator_index];
-      bool ret = current_mutator->Mutate(inout_sample, prng, all_samples);
-      if (ret) {
-        return true;
-      }
-      current_mutator_index++;
-    }
-    return false;
-  }
-
+  
   virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
-    child_mutators[current_mutator_index]->NotifyResult(result, has_new_coverage);
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->NotifyResult(result, has_new_coverage);
+    }
+  }
+  
+  virtual void AddHotOffset(MutatorSampleContext *context, size_t hot_offset) override {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->AddHotOffset(context->child_contexts[i], hot_offset);
+    }
+  }
+  
+  virtual void SaveContext(MutatorSampleContext *context, FILE *fp) override {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->SaveContext(context->child_contexts[i], fp);
+    }
   }
 
+  virtual void LoadContext(MutatorSampleContext *context, FILE *fp) override {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->LoadContext(context->child_contexts[i], fp);
+    }
+  }
+  
   virtual bool CanGenerateSample() override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       if (child_mutators[i]->CanGenerateSample()) return true;
@@ -149,35 +129,110 @@ public:
         return child_mutators[i]->GenerateSample(sample, prng);
       }
     }
-    return false;  
+    return false;
+  }
+};
+
+// Mutator that runs another mutator for N rounds
+class NRoundMutator : public HierarchicalMutator {
+public:
+  NRoundMutator(Mutator *child_mutator, size_t num_rounds) {
+    AddMutator(child_mutator);
+    this->num_rounds = num_rounds;
+    current_round = 0;
+  }
+  
+  virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
+    HierarchicalMutator::InitRound(input_sample, context);
+    current_round = 0;
+  }
+
+  virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
+    if (current_round == num_rounds) return false;
+    child_mutators[0]->Mutate(inout_sample, prng, all_samples);
+    current_round++;
+    return true;
   }
 
 protected:
-  int current_mutator_index;
-  std::vector<Mutator *> child_mutators;
+  size_t current_round;
+  size_t num_rounds;
 };
 
-// mutates using random child mutator
-class SelectMutator : public Mutator {
-  void AddMutator(Mutator *mutator) {
-    child_mutators.push_back(mutator);
+class MutatorSequenceContext : public MutatorSampleContext {
+public:
+  uint64_t current_mutator_index;
+};
+
+// runs input mutators in sequence
+class MutatorSequence : public HierarchicalMutator {
+public:
+  MutatorSequence(bool restart_each_round = true, bool restart_on_hot_offset = false) {
+    this->restart_each_round = restart_each_round;
+    this->restart_on_hot_offset = restart_on_hot_offset;
   }
 
   virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
-    for (size_t i = 0; i < child_mutators.size(); i++) {
-      child_mutators[i]->InitRound(input_sample, ((SampleContextVector *)context)->contexts[i]);
+    HierarchicalMutator::InitRound(input_sample, context);
+    this->context = (MutatorSequenceContext *)context;
+    if(restart_each_round) {
+      this->context->current_mutator_index = 0;
     }
   }
 
   virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override {
-    SampleContextVector *context = new SampleContextVector;
-    context->contexts.resize(child_mutators.size());
-    for (size_t i = 0; i < child_mutators.size(); i++) {
-      context->contexts[i] = child_mutators[i]->CreateSampleContext(sample);
-    }
+    MutatorSequenceContext *context = new MutatorSequenceContext;
+    CreateChildContexts(sample, context);
+    context->current_mutator_index = 0;
     return context;
   }
+  
+  virtual void AddHotOffset(MutatorSampleContext *context, size_t hot_offset) override {
+    HierarchicalMutator::AddHotOffset(context, hot_offset);
+    if(restart_on_hot_offset) {
+      ((MutatorSequenceContext *)context)->current_mutator_index = 0;
+    }
+  }
+  
+  virtual void SaveContext(MutatorSampleContext *context, FILE *fp) override {
+    uint64_t current_mutator_index = ((MutatorSequenceContext *)context)->current_mutator_index;
+    fwrite(&current_mutator_index, sizeof(current_mutator_index), 1, fp);
 
+    HierarchicalMutator::SaveContext(context, fp);
+  }
+
+  virtual void LoadContext(MutatorSampleContext *context, FILE *fp) override {
+    uint64_t current_mutator_index;
+    fread(&current_mutator_index, sizeof(current_mutator_index), 1, fp);
+    ((MutatorSequenceContext *)context)->current_mutator_index = current_mutator_index;
+    
+    HierarchicalMutator::LoadContext(context, fp);
+  }
+
+  virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
+    while (context->current_mutator_index < child_mutators.size()) {
+      Mutator *current_mutator = child_mutators[context->current_mutator_index];
+      bool ret = current_mutator->Mutate(inout_sample, prng, all_samples);
+      if (ret) {
+        return true;
+      }
+      context->current_mutator_index++;
+    }
+    return false;
+  }
+
+  virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
+    child_mutators[context->current_mutator_index]->NotifyResult(result, has_new_coverage);
+  }
+
+protected:
+  MutatorSequenceContext *context;
+  bool restart_each_round;
+  bool restart_on_hot_offset;
+};
+
+// mutates using random child mutator
+class SelectMutator : public HierarchicalMutator {
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
     int mutator_index = prng->Rand() % child_mutators.size();
     Mutator *current_mutator = child_mutators[mutator_index];
@@ -187,13 +242,6 @@ class SelectMutator : public Mutator {
 
   virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
     child_mutators[last_mutator_index]->NotifyResult(result, has_new_coverage);
-  }
-
-  virtual bool CanGenerateSample() override {
-    for (size_t i = 0; i < child_mutators.size(); i++) {
-      if (child_mutators[i]->CanGenerateSample()) return true;
-    }
-    return false;
   }
 
   virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
@@ -208,50 +256,36 @@ class SelectMutator : public Mutator {
 
 protected:
   int last_mutator_index;
-  std::vector<Mutator *> child_mutators;
 };
 
 // like SelectMutator but each child mutator
 // has an associated probability
-class PSelectMutator : public Mutator {
+class PSelectMutator : public HierarchicalMutator {
 public:
-  struct ChildMutator {
-    Mutator *mutator;
-    double p;
-  };
-
   PSelectMutator() {
     psum = 0;
   }
 
+  virtual void AddMutator(Mutator *mutator) override {
+    child_mutators.push_back(mutator);
+    probabilities.push_back(1);
+    psum += 1;
+  }
+
   void AddMutator(Mutator *mutator, double p) {
-    child_mutators.push_back({mutator, p});
+    child_mutators.push_back(mutator);
+    probabilities.push_back(p);
     psum += p;
-  }
-
-  virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
-    for (size_t i = 0; i < child_mutators.size(); i++) {
-      child_mutators[i].mutator->InitRound(input_sample, ((SampleContextVector *)context)->contexts[i]);
-    }
-  }
-
-  virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override {
-    SampleContextVector *context = new SampleContextVector;
-    context->contexts.resize(child_mutators.size());
-    for (size_t i = 0; i < child_mutators.size(); i++) {
-      context->contexts[i] = child_mutators[i].mutator->CreateSampleContext(sample);
-    }
-    return context;
   }
 
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
     double p = prng->RandReal() * psum;
     double sum = 0;
     for (int i = 0; i < child_mutators.size(); i++) {
-      sum += child_mutators[i].p;
+      sum += probabilities[i];
       if ((p < sum) || (i == (child_mutators.size() - 1))) {
         last_mutator_index = i;
-        Mutator *current_mutator = child_mutators[i].mutator;
+        Mutator *current_mutator = child_mutators[i];
         return current_mutator->Mutate(inout_sample, prng, all_samples);
       }
     }
@@ -260,33 +294,26 @@ public:
   }
 
   virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
-    child_mutators[last_mutator_index].mutator->NotifyResult(result, has_new_coverage);
-  }
-
-  virtual bool CanGenerateSample() override {
-    for (size_t i = 0; i < child_mutators.size(); i++) {
-      if (child_mutators[i].mutator->CanGenerateSample()) return true;
-    }
-    return false;
+    child_mutators[last_mutator_index]->NotifyResult(result, has_new_coverage);
   }
 
   virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
     double psum = 0;
     size_t last_generator = 0;
     for (size_t i = 0; i < child_mutators.size(); i++) {
-      if (child_mutators[i].mutator->CanGenerateSample()) {
-        psum += child_mutators[i].p;
+      if (child_mutators[i]->CanGenerateSample()) {
+        psum += probabilities[i];
         last_generator = i;
       }
     }
     double p = prng->RandReal() * psum;
     double sum = 0;
     for (int i = 0; i < child_mutators.size(); i++) {
-      if (!child_mutators[i].mutator->CanGenerateSample()) continue;
-      sum += child_mutators[i].p;
+      if (!child_mutators[i]->CanGenerateSample()) continue;
+      sum += probabilities[i];
       if ((p < sum) || (i == last_generator)) {
         last_mutator_index = i;
-        Mutator* current_mutator = child_mutators[i].mutator;
+        Mutator* current_mutator = child_mutators[i];
         return current_mutator->GenerateSample(sample, prng);
       }
     }
@@ -296,50 +323,29 @@ public:
 protected:
   double psum;
   int last_mutator_index;
-  std::vector<ChildMutator> child_mutators;
+  std::vector<double> probabilities;
 };
 
 // mutator that runs child mutators repeatedly
 // (in the same Mutate() call)
-class RepeatMutator : public Mutator {
+class RepeatMutator : public HierarchicalMutator {
 public:
   RepeatMutator(Mutator *mutator, double repeat_p) {
-    this->child_mutator = mutator;
+    AddMutator(mutator);
     this->repeat_p = repeat_p;
-  }
-
-  virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
-    child_mutator->InitRound(input_sample, context);
-  }
-
-  virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override {
-    return child_mutator->CreateSampleContext(sample);
   }
 
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
     // run the mutator at least once
-    bool ret = child_mutator->Mutate(inout_sample, prng, all_samples);
+    bool ret = child_mutators[0]->Mutate(inout_sample, prng, all_samples);
     if (!ret) return false;
     while (prng->RandReal() < repeat_p) {
-      child_mutator->Mutate(inout_sample, prng, all_samples);
+      child_mutators[0]->Mutate(inout_sample, prng, all_samples);
     }
     return true;
   }
 
-  virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
-    child_mutator->NotifyResult(result, has_new_coverage);
-  }
-
-  virtual bool CanGenerateSample() override {
-    return child_mutator->CanGenerateSample();
-  }
-
-  virtual bool GenerateSample(Sample* sample, PRNG* prng) override {
-    return child_mutator->GenerateSample(sample, prng);
-  }
-
 public:
-  Mutator *child_mutator;
   double repeat_p;
 };
 
@@ -414,9 +420,9 @@ protected:
   int max_duplicate_cnt;
 };
 
-class InterstingValueMutator : public Mutator {
+class InterestingValueMutator : public Mutator {
 public:
-  InterstingValueMutator(bool use_default_values = false);
+  InterestingValueMutator(bool use_default_values = false);
 
   template<typename T> void AddDefaultValues();
   
@@ -437,4 +443,137 @@ public:
 protected:
   int points;
   double displacement_p;
+};
+
+// does x iterations of deterministic and y
+// iterations of nondeterministic mutations
+// when deterministic mutator is done
+// does only nondeterministic mutation
+class DtermininsticNondeterministicMutator : public HierarchicalMutator {
+public:
+  DtermininsticNondeterministicMutator(Mutator *deterministic_mutator, size_t num_rounds_deterministic,
+                Mutator *nondeterministic_mutator, size_t num_rounds_nondeterministic)
+  {
+    AddMutator(deterministic_mutator);
+    AddMutator(nondeterministic_mutator);
+    this->deterministic_mutator = deterministic_mutator;
+    this->nondeterministic_mutator = nondeterministic_mutator;
+    this->num_rounds_deterministic = num_rounds_deterministic;
+    this->num_rounds_nondeterministic = num_rounds_nondeterministic;
+    current_round = 0;
+  }
+
+  virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
+    HierarchicalMutator::InitRound(input_sample, context);
+    current_round = 0;
+  }
+
+  virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
+    bool ret;
+    if(current_round < num_rounds_deterministic) {
+      ret = deterministic_mutator->Mutate(inout_sample, prng, all_samples);
+      if(ret) {
+        last_mutator = deterministic_mutator;
+        current_round++;
+        return ret;
+      }
+    }
+    if(current_round < (num_rounds_deterministic + num_rounds_nondeterministic)) {
+      nondeterministic_mutator->Mutate(inout_sample, prng, all_samples);
+      last_mutator = nondeterministic_mutator;
+      current_round++;
+      return true;
+    }
+    return false;
+  }
+
+  virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
+    last_mutator->NotifyResult(result, has_new_coverage);
+  }
+
+protected:
+  size_t current_round;
+  size_t num_rounds_deterministic;
+  size_t num_rounds_nondeterministic;
+  Mutator *deterministic_mutator;
+  Mutator *nondeterministic_mutator;
+  Mutator *last_mutator;
+};
+
+class BaseDeterministicContext : public MutatorSampleContext {
+public:
+  BaseDeterministicContext() {
+    cur_region = 0;
+  }
+  
+  struct MutateRegion {
+    uint64_t start;
+    uint64_t end;
+    uint64_t cur;
+    uint64_t cur_progress;
+  };
+  
+  std::vector<MutateRegion> regions;
+  uint64_t cur_region;
+  
+  void AddHotOffset(size_t offset);
+  
+  bool GetNextByteToMutate(size_t *pos, size_t *progress, size_t max_progress);
+  
+  Mutex mutex;
+};
+
+class BaseDeterministicMutator : public Mutator {
+public:
+  virtual MutatorSampleContext *CreateSampleContext(Sample *sample) override;
+  
+  virtual void InitRound(Sample *input_sample, MutatorSampleContext *context) override {
+    this->context = (BaseDeterministicContext *)context;
+  }
+  
+  virtual void AddHotOffset(MutatorSampleContext *context, size_t hot_offset) override {
+    ((BaseDeterministicContext *)context)->AddHotOffset(hot_offset);
+  }
+  
+  virtual void SaveContext(MutatorSampleContext *context, FILE *fp) override {
+    BaseDeterministicContext *current_context = (BaseDeterministicContext *)context;
+    current_context->mutex.Lock();
+    uint64_t num_regions = current_context->regions.size();
+    fwrite(&num_regions, sizeof(num_regions), 1, fp);
+    fwrite(&current_context->cur_region, sizeof(current_context->cur_region), 1, fp);
+    fwrite(&current_context->regions[0], sizeof(current_context->regions[0]), num_regions, fp);
+    current_context->mutex.Unlock();
+  }
+
+  virtual void LoadContext(MutatorSampleContext *context, FILE *fp) override {
+    BaseDeterministicContext *current_context = (BaseDeterministicContext *)context;
+    current_context->mutex.Lock();
+    uint64_t num_regions;
+    fread(&num_regions, sizeof(num_regions), 1, fp);
+    fread(&current_context->cur_region, sizeof(current_context->cur_region), 1, fp);
+    current_context->regions.resize(num_regions);
+    fread(&current_context->regions[0], sizeof(current_context->regions[0]), num_regions, fp);
+    current_context->mutex.Unlock();
+  }
+  
+  BaseDeterministicContext *context;
+};
+
+class DeterministicByteFlipMutator : public BaseDeterministicMutator {
+public:
+  bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
+};
+
+class DeterministicInterestingValueMutator : public BaseDeterministicMutator {
+public:
+  DeterministicInterestingValueMutator(bool use_default_values = false);
+
+  template<typename T> void AddDefaultValues();
+  
+  void AddInterestingValue(char *data, size_t size);
+
+  bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
+
+protected:
+  std::vector<Sample> interesting_values;
 };

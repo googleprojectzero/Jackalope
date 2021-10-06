@@ -17,6 +17,9 @@ limitations under the License.
 #pragma once
 
 #include <stdio.h>
+#include <unordered_map>
+
+#include "mutex.h"
 
 #define MAX_SAMPLE_SIZE 1000000
 
@@ -37,8 +40,43 @@ public:
   int Load(const char * filename);
 
   void Init(const char *data, size_t size);
+  void Init(size_t size);
 
   void Append(char *data, size_t size);
 
   void Trim(size_t new_size);
+  
+  void Resize(size_t new_size);
+  
+  size_t FindFirstDiff(Sample &other);
 };
+
+// a Trie-like structure whose purpose is to be able to
+// quickly identify the first byte of a sample
+// that differs from the samples seen so far
+class SampleTrie {
+public:
+  SampleTrie() {
+    root = NULL;
+  }
+  
+  size_t AddSample(Sample *sample);
+
+protected:
+  struct SampleTrieNode {
+    SampleTrieNode();
+    ~SampleTrieNode();
+    
+    void InitConstantPart(Sample *sample, size_t from, size_t to);
+
+    char *constant_part;
+    size_t constant_part_size;
+
+    std::unordered_map<unsigned char, SampleTrieNode*> children;
+    bool leaf;
+  };
+  
+  static Mutex sample_trie_mutex;
+  SampleTrieNode *root;
+};
+

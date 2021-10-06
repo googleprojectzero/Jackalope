@@ -162,14 +162,14 @@ bool BlockDuplicateMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector
   return true;
 }
 
-void InterstingValueMutator::AddInterestingValue(char *data, size_t size) {
+void InterestingValueMutator::AddInterestingValue(char *data, size_t size) {
   Sample interesting_sample;
   interesting_sample.Init(data, size);
   interesting_values.push_back(interesting_sample);
 }
 
-bool InterstingValueMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
-  // printf("In InterstingValueMutator::Mutate\n");
+bool InterestingValueMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
+  // printf("In InterestingValueMutator::Mutate\n");
   if (interesting_values.empty()) return true;
   Sample *interesting_sample = &interesting_values[prng->Rand(0, (int)interesting_values.size() - 1)];
   size_t blockstart, blocksize;
@@ -178,7 +178,7 @@ bool InterstingValueMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vecto
   return true;
 }
 
-InterstingValueMutator::InterstingValueMutator(bool use_default_values) {
+InterestingValueMutator::InterestingValueMutator(bool use_default_values) {
   if (use_default_values) {
     AddDefaultValues<uint16_t>();
     AddDefaultValues<uint32_t>();
@@ -186,21 +186,16 @@ InterstingValueMutator::InterstingValueMutator(bool use_default_values) {
   }
 }
 
-template<typename T> void InterstingValueMutator::AddDefaultValues() {
+template<typename T> void InterestingValueMutator::AddDefaultValues() {
   uint32_t M[] = {2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
                   56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
                   136, 144, 152, 160, 168, 176, 184, 192, 200,
                   208, 216, 224, 232, 240, 248, 256 };
 
-  int32_t N[] = {-1, 0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
-                  56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
-                  136, 144, 152, 160, 168, 176, 184, 192, 200,
-                  208, 216, 224, 232, 240, 248, 256 };
+  int32_t N[] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
 
   T value;
   value = 0;
-  AddInterestingValue((char *)(&value), sizeof(value));
-  value = (T)(-1);
   AddInterestingValue((char *)(&value), sizeof(value));
 
   value = 1;
@@ -210,14 +205,19 @@ template<typename T> void InterstingValueMutator::AddDefaultValues() {
   }
 
   for (uint32_t i = 0; i < (sizeof(M)/sizeof(M[0])); i++) {
-    for (uint32_t j = 0; j < (sizeof(N)/sizeof(N[0])); j++) {
-      int32_t m = M[i];
-      int32_t n = N[j];
-      value = (T)(-1) / m + 1 - n;
-      AddInterestingValue((char *)(&value), sizeof(value));
-      value = FlipEndian(value);
-      AddInterestingValue((char *)(&value), sizeof(value));
-    }
+    int32_t m = M[i];
+    value = (T)(-1) / m + 1;
+    AddInterestingValue((char *)(&value), sizeof(value));
+    value = FlipEndian(value);
+    AddInterestingValue((char *)(&value), sizeof(value));
+  }
+    
+  for (uint32_t j = 0; j < (sizeof(N)/sizeof(N[0])); j++) {
+    int32_t n = N[j];
+    value = (T)(0) - n;
+    AddInterestingValue((char *)(&value), sizeof(value));
+    value = FlipEndian(value);
+    AddInterestingValue((char *)(&value), sizeof(value));
   }
 }
 
@@ -308,3 +308,163 @@ bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
     return true;
   }
 }
+
+void BaseDeterministicContext::AddHotOffset(size_t offset) {
+  mutex.Lock();
+
+  // in any case, restart scan
+  cur_region = 0;
+  
+  MutateRegion new_region;
+  new_region.cur_progress = 0;
+
+  size_t newregion_start = offset;
+  if(newregion_start < DETERMINISTIC_MUTATE_BYTES_PREVIOUS) newregion_start = 0;
+  else newregion_start -= DETERMINISTIC_MUTATE_BYTES_PREVIOUS;
+  size_t newregion_end = offset + DETERMINISTIC_MUTATE_BYTES_NEXT;
+  
+  for(auto iter = regions.begin(); iter != regions.end(); iter++) {
+    if(newregion_start < iter->start) {
+      new_region.start = newregion_start;
+      new_region.cur = new_region.start;
+      if(iter->start > newregion_end) {
+        new_region.end = newregion_end;
+      } else {
+        new_region.end = iter->start;
+      }
+      regions.insert(iter, new_region);
+      mutex.Unlock();
+      return;
+    }
+    if(newregion_start <= iter->end) {
+      if(newregion_end <= iter->end) {
+        mutex.Unlock();
+        return;
+      }
+      // extend an existing region
+      iter->end = newregion_end;
+      mutex.Unlock();
+      return;
+    }
+  }
+  new_region.start = newregion_start;
+  new_region.cur = new_region.start;
+  new_region.end = newregion_end;
+  regions.push_back(new_region);
+  mutex.Unlock();
+  return;
+}
+
+bool BaseDeterministicContext::GetNextByteToMutate(size_t *pos, size_t *progress, size_t max_progress) {
+  MutateRegion *region = NULL;
+  
+  while(cur_region < regions.size()) {
+    region = &(regions[cur_region]);
+
+    if(region->cur_progress >= max_progress) {
+      region->cur_progress = 0;
+      region->cur++;
+    }
+
+    if(region->cur >= region->end) {
+      cur_region++;
+      continue;
+    }
+
+    *pos = region->cur;
+    *progress = region->cur_progress;
+    region->cur_progress++;
+    return true;
+  }
+  return false;
+}
+
+
+MutatorSampleContext *BaseDeterministicMutator::CreateSampleContext(Sample *sample) {
+  BaseDeterministicContext *context = new BaseDeterministicContext;
+  return context;
+}
+
+bool DeterministicByteFlipMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
+  size_t pos;
+  size_t value;
+  
+  if(!context->GetNextByteToMutate(&pos, &value, 256)) {
+    return false;
+  }
+  
+  if(pos >= inout_sample->size) {
+    inout_sample->Resize(pos + 1);
+  }
+  inout_sample->bytes[pos] = (char)(value);
+  
+  return true;
+}
+
+void DeterministicInterestingValueMutator::AddInterestingValue(char *data, size_t size) {
+  Sample interesting_sample;
+  interesting_sample.Init(data, size);
+  interesting_values.push_back(interesting_sample);
+}
+
+DeterministicInterestingValueMutator::DeterministicInterestingValueMutator(bool use_default_values) {
+  if (use_default_values) {
+    AddDefaultValues<uint16_t>();
+    AddDefaultValues<uint32_t>();
+    AddDefaultValues<uint64_t>();
+  }
+}
+
+template<typename T> void DeterministicInterestingValueMutator::AddDefaultValues() {
+  uint32_t M[] = {2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
+                  56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
+                  136, 144, 152, 160, 168, 176, 184, 192, 200,
+                  208, 216, 224, 232, 240, 248, 256 };
+
+  int32_t N[] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+
+  T value;
+  value = 0;
+  AddInterestingValue((char *)(&value), sizeof(value));
+
+  value = 1;
+  for (uint32_t i = 0; i < (sizeof(value) * 8); i++) {
+    AddInterestingValue((char *)(&value), sizeof(value));
+    value = (value << 1);
+  }
+
+  for (uint32_t i = 0; i < (sizeof(M)/sizeof(M[0])); i++) {
+    int32_t m = M[i];
+    value = (T)(-1) / m + 1;
+    AddInterestingValue((char *)(&value), sizeof(value));
+    value = FlipEndian(value);
+    AddInterestingValue((char *)(&value), sizeof(value));
+  }
+    
+  for (uint32_t j = 0; j < (sizeof(N)/sizeof(N[0])); j++) {
+    int32_t n = N[j];
+    value = (T)(0) - n;
+    AddInterestingValue((char *)(&value), sizeof(value));
+    value = FlipEndian(value);
+    AddInterestingValue((char *)(&value), sizeof(value));
+  }
+}
+
+bool DeterministicInterestingValueMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
+  size_t pos;
+  size_t value_index;
+  
+  if(!context->GetNextByteToMutate(&pos, &value_index, interesting_values.size())) {
+    return false;
+  }
+  
+  Sample *interesting_sample = &interesting_values[value_index];
+  if((pos + interesting_sample->size) > inout_sample->size) {
+    inout_sample->Resize(pos + interesting_sample->size);
+  }
+  memcpy(inout_sample->bytes + pos, interesting_sample->bytes, interesting_sample->size);
+  
+  return true;
+}
+
+

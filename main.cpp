@@ -24,10 +24,20 @@ limitations under the License.
 
 class BinaryFuzzer : public Fuzzer {
   Mutator *CreateMutator(int argc, char **argv, ThreadContext *tc) override;
+  bool TrackHotOffsets() override { return true; }
 };
 
 Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) {
-  // a pretty simple non-deterministic mutation strategy
+  bool use_deterministic_mutations = true;
+  if(GetBinaryOption("-server", argc, argv, false)) {
+    // don't do deterministic mutation if a server is specified
+    use_deterministic_mutations = false;
+  }
+  use_deterministic_mutations = GetBinaryOption("-deterministic_mutations",
+                                                argc, argv,
+                                                use_deterministic_mutations);
+
+  // a pretty simple mutation strategy
 
   PSelectMutator *pselect = new PSelectMutator();
 
@@ -41,7 +51,7 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   pselect->AddMutator(new BlockFlipMutator(16, 64), 0.1);
   pselect->AddMutator(new BlockFlipMutator(1, 64, true), 0.1);
   pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.1);
-  pselect->AddMutator(new InterstingValueMutator(true), 0.1);
+  pselect->AddMutator(new InterestingValueMutator(true), 0.1);
   pselect->AddMutator(new SpliceMutator(1, 0.5), 0.1);
   pselect->AddMutator(new SpliceMutator(2, 0.5), 0.1);
 
@@ -49,10 +59,25 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   // (do two or more mutations in a single cycle
   RepeatMutator *repeater = new RepeatMutator(pselect, 0.5);
 
-  // and have 1000 rounds of this per sample cycle
-  NRoundMutator *mutator = new NRoundMutator(repeater, 1000);
-
-  return mutator;
+  if(!use_deterministic_mutations) {
+    
+    // and have 1000 rounds of this per sample cycle
+    NRoundMutator *mutator = new NRoundMutator(repeater, 1000);
+    return mutator;
+    
+  } else {
+    
+    MutatorSequence *deterministic_sequence = new MutatorSequence(false, true);
+    // do deterministic byte flip mutations (around hot bits)
+    deterministic_sequence->AddMutator(new DeterministicByteFlipMutator());
+    // ..followed by deterministc interesting values
+    deterministic_sequence->AddMutator(new DeterministicInterestingValueMutator(true));
+    
+    // do 1000 rounds of derministic mutations, will switch to nondeterministic mutations
+    // once deterministic mutator is "done"
+    DtermininsticNondeterministicMutator *mutator = new DtermininsticNondeterministicMutator(deterministic_sequence, 1000, repeater, 0);
+    return mutator;
+  }
 }
 
 class GrammarFuzzer : public Fuzzer {
@@ -62,7 +87,7 @@ protected:
   Grammar grammar;
   Mutator* CreateMutator(int argc, char** argv, ThreadContext* tc) override;
   Minimizer* CreateMinimizer(int argc, char** argv, ThreadContext* tc) override;
-  bool OutputFilter(Sample* original_sample, Sample* output_sample) override;
+  bool OutputFilter(Sample* original_sample, Sample* output_sample, ThreadContext* tc) override;
 
   bool IsReturnValueInteresting(uint64_t return_value) override;
 };
@@ -85,7 +110,7 @@ Minimizer* GrammarFuzzer::CreateMinimizer(int argc, char** argv, ThreadContext* 
   return new GrammarMinimizer(&grammar);
 }
 
-bool GrammarFuzzer::OutputFilter(Sample* original_sample, Sample* output_sample) {
+bool GrammarFuzzer::OutputFilter(Sample* original_sample, Sample* output_sample, ThreadContext* tc) {
   uint64_t string_size = *((uint64_t*)original_sample->bytes);
   if (original_sample->size < (string_size + sizeof(string_size))) {
     FATAL("Incorrectly encoded grammar sample");
