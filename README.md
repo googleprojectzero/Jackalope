@@ -33,7 +33,7 @@ While there are a lot of good coverage-guided fuzzers that work on targets where
 
 Jackalope can be used stand-alone, but is more powerful when used as a library, where users can plug in custom components that would replace the default behavior. By default, Jackalope ships with:
  - Binary instrumentation using TinyInst
- - A simple set of generic mutators for binary format as well as a [grammar-based mutation engine](https://github.com/googleprojectzero/Jackalope/blob/main/mutators/grammar/README.md)
+ - A simple set of generic mutators for binary formats as well as a [grammar-based mutation engine](https://github.com/googleprojectzero/Jackalope/blob/main/mutators/grammar/README.md)
  - Sample delivery via file or via shared memory
 
 Jackalope can be run in parallel
@@ -48,7 +48,7 @@ Jackalope does not currently include advanced mutation strategies. Instead it sh
 
 Currently, fuzzing of black-box binaries is supported on Windows and macOS.
 
-Jackalope is also able to run on Linux with Sanitizer Coverage (source code for the targer required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
+Jackalope is also able to run on Linux with Sanitizer Coverage (source code of the targer required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
 
 ## Building Jackalope
 
