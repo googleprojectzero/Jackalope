@@ -160,6 +160,13 @@ Grammar::Grammar() {
   constants["tab"] = "\t";
 }
 
+Grammar::~Grammar() {
+  for(auto pair : symbols)
+    delete pair.second;
+  for(auto pair : string_cache)
+    delete pair.second;
+}
+
 int Grammar::HexStringToString(std::string &hex, std::string &out) {
   if (hex.size() % 2) return 0;
 

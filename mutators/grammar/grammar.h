@@ -115,6 +115,7 @@ public:
 
 public:
   Grammar();
+  ~Grammar();
 
   // reads grammar from a text file
   int Read(const char* filename);
