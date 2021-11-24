@@ -109,6 +109,8 @@ The following command line arguments are supported:
 
 `-iterations_per_round` - Number of times to mutate and run a sample from the corpus before moving on to the next sample. Defaults to 1000. You might consider decreasing this value for very slow targets.
 
+`-keep_samples_in_memory` - Whether to always keep all samples in memory. Defaults to true. Recommended unless the corpus is too large to fit in memory.
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):
