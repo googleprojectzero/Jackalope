@@ -54,8 +54,14 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   pselect->AddMutator(new BlockFlipMutator(1, 64, true), 0.1);
   pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.1);
   pselect->AddMutator(new InterestingValueMutator(true), 0.1);
-  pselect->AddMutator(new SpliceMutator(1, 0.5), 0.1);
-  pselect->AddMutator(new SpliceMutator(2, 0.5), 0.1);
+
+  // SpliceMutator is not compatible with -keep_samples_in_memory=0
+  // as it requires other samples in memory besides the one being
+  // fuzzed.
+  if (GetBinaryOption("-keep_samples_in_memory", argc, argv, true)) {
+    pselect->AddMutator(new SpliceMutator(1, 0.5), 0.1);
+    pselect->AddMutator(new SpliceMutator(2, 0.5), 0.1);
+  }
 
   // potentially repeat the mutation
   // (do two or more mutations in a single cycle

@@ -216,7 +216,7 @@ protected:
   uint64_t server_update_interval_ms;
 
   std::list<std::string> input_files;
-  std::list<Sample> server_samples;
+  std::list<Sample *> server_samples;
   FuzzerState state;
   size_t samples_pending;
 
@@ -225,6 +225,8 @@ protected:
   double acceptable_crash_ratio;
 
   bool minimize_samples;
+
+  bool keep_samples_in_memory;
 
   int coverage_reproduce_retries;
   int crash_reproduce_retries;

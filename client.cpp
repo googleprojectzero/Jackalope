@@ -14,13 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "common.h"
 #include "coverage.h"
 #include "client.h"
+#include "directory.h"
 
 using namespace std;
 
 void CoverageClient::Init(int argc, char **argv) {
+  keep_samples_in_memory = GetBinaryOption("-keep_samples_in_memory", argc, argv, true);
+
+  if (!keep_samples_in_memory) {
+    char* out_dir = GetOption("-out", argc, argv);
+    sample_dir = DirJoin(out_dir, "server_cache");
+    CreateDirectory(sample_dir);
+  }
+
   char *option = GetOption("-server", argc, argv);
   if (!option) {
     have_server = false;
@@ -163,7 +174,7 @@ int CoverageClient::ReportNewCoverage(Coverage *new_coverage, Sample *new_sample
   return 1;
 }
 
-int CoverageClient::GetUpdates(std::list<Sample> *new_samples, uint64_t total_execs) {
+int CoverageClient::GetUpdates(std::list<Sample *> &new_samples, uint64_t total_execs) {
   uint64_t server_timestamp;
   string module_name;
 
@@ -188,14 +199,26 @@ int CoverageClient::GetUpdates(std::list<Sample> *new_samples, uint64_t total_ex
     if (reply == 'N') {
       break;
     } else if (reply == 'S') {
-      Sample sample;
+      Sample *sample = new Sample();
 
-      if (!RecvSample(sock, sample)) {
+      if (!RecvSample(sock, *sample)) {
         DisconnectFromServer();
         return 0;
       }
 
-      new_samples->push_back(sample);
+      if (!keep_samples_in_memory) {
+        char fileindex[20];
+        sprintf(fileindex, "%05lld", num_samples);
+        string filename = string("sample_") + fileindex;
+        string outfile = DirJoin(sample_dir, filename);
+        sample->filename = outfile;
+        sample->Save();
+        sample->FreeMemory();
+
+        num_samples++;
+      }
+
+      new_samples.push_back(sample);
     } else {
       DisconnectFromServer();
       return 0;

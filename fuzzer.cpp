@@ -101,6 +101,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   crash_reproduce_retries = GetIntOption("-crash_retry", argc, argv, DEFAULT_CRASH_REPRODUCE_RETRIES);
 
   minimize_samples = GetBinaryOption("-minimize_samples", argc, argv, true);
+
+  keep_samples_in_memory = GetBinaryOption("-keep_samples_in_memory", argc, argv, true);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -399,6 +401,11 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
     new_entry->sample_index = num_samples - 1;
     new_entry->sample_filename = filename;
 
+    if (!keep_samples_in_memory) {
+      new_sample->filename = outfile;
+      new_sample->FreeMemory();
+    }
+
     queue_mutex.Lock();
     all_samples.push_back(new_sample);
     all_entries.push_back(new_entry);
@@ -525,7 +532,7 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
   {
     last_server_update_time_ms = GetCurTime();
     server_mutex.Lock();
-    server->GetUpdates(&server_samples, total_execs);
+    server->GetUpdates(server_samples, total_execs);
     server_mutex.Unlock();
     state = SERVER_SAMPLE_PROCESSING;
   }
@@ -538,7 +545,7 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
         server->ReportNewCoverage(&fuzzer_coverage, NULL);
         coverage_mutex.Unlock();
         last_server_update_time_ms = GetCurTime();
-        server->GetUpdates(&server_samples, total_execs);
+        server->GetUpdates(server_samples, total_execs);
         server_mutex.Unlock();
         state = SERVER_SAMPLE_PROCESSING;
       } else {
@@ -601,8 +608,7 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
       job->type = WAIT;
     } else {
       job->type = PROCESS_SAMPLE;
-      job->sample = new Sample();
-      *job->sample = server_samples.front();
+      job->sample = server_samples.front();
       server_samples.pop_front();
       samples_pending++;
     }
@@ -649,6 +655,8 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
 
   job->discard_sample = false;
 
+  entry->sample->EnsureLoaded();
+
   while (1) {
     Sample mutated_sample = *entry->sample;
     if (!tc->mutator->Mutate(&mutated_sample, tc->prng, tc->all_samples_local)) break;
@@ -687,10 +695,15 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
       break;
     }
   }
+
+  if (!keep_samples_in_memory) {
+    entry->sample->FreeMemory();
+  }
 }
 
 void Fuzzer::ProcessSample(ThreadContext* tc, FuzzerJob* job) {
   int has_new_coverage = 0;
+  job->sample->EnsureLoaded();
   RunResult result = RunSample(tc, job->sample, &has_new_coverage, false, false, init_timeout, corpus_timeout);
   if (result == CRASH) {
     WARN("Input sample resulted in a crash");
@@ -791,6 +804,11 @@ void Fuzzer::RestoreState(ThreadContext *tc) {
     entry->context = tc->mutator->CreateSampleContext(sample);
     tc->mutator->LoadContext(entry->context, fp);
 
+    if (!keep_samples_in_memory) {
+      entry->sample->filename = outfile;
+      entry->sample->FreeMemory();
+    }
+
     all_samples.push_back(sample);
     all_entries.push_back(entry);
     if(!entry->discarded) sample_queue.push(entry);
@@ -852,8 +870,6 @@ void Fuzzer::ReplaceTargetCmdArg(ThreadContext *tc, const char *search, const ch
     }
   }
 }
-
-
 
 PRNG *Fuzzer::CreatePRNG(int argc, char **argv, ThreadContext *tc) {
   return new MTPRNG();

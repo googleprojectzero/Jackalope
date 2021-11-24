@@ -51,6 +51,7 @@ bool ArithmeticMutator::Mutate(Sample *inout_sample,
     case 2:
       return MutateArithmeticValue<uint64_t>(inout_sample, prng, flip_endian);
   }
+  return true;
 }
 
 template<typename T>
@@ -150,7 +151,7 @@ bool BlockDuplicateMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector
   char *newbytes;
   newbytes = (char *)malloc(inout_sample->size + blockcount * blocksize);
   memcpy(newbytes, inout_sample->bytes, blockpos + blocksize);
-  for (size_t i = 0; i<blockcount; i++) {
+  for (int64_t i = 0; i<blockcount; i++) {
     memcpy(newbytes + blockpos + (i + 1)*blocksize, inout_sample->bytes + blockpos, blocksize);
   }
   memcpy(newbytes + blockpos + (blockcount + 1)*blocksize, 

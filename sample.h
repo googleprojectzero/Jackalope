@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <stdio.h>
 #include <unordered_map>
+#include <string>
 
 #include "mutex.h"
 
@@ -27,6 +28,7 @@ class Sample {
 public:
   char *bytes;
   size_t size;
+  std::string filename;
 
   Sample();
   ~Sample();
@@ -34,6 +36,12 @@ public:
   Sample& operator= (const Sample &in);
 
   int Save(const char * filename);
+
+  int Save();
+  int Load();
+
+  void FreeMemory();
+  void EnsureLoaded();
 
   void Save(FILE * fp);
 

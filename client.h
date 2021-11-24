@@ -24,7 +24,9 @@ limitations under the License.
 
 class CoverageClient : public ServerCommon {
 public:
-  CoverageClient() : last_timestamp(0), have_server(false), server_port(DEFAULT_SERVER_PORT) {
+  CoverageClient() : last_timestamp(0), num_samples(0),
+    have_server(false), server_port(DEFAULT_SERVER_PORT)
+  {
     PRNG::SecureRandom(&client_id, sizeof(client_id));
   }
   ~CoverageClient();
@@ -32,7 +34,7 @@ public:
   void Init(int argc, char **argv);
 
   int ReportNewCoverage(Coverage *new_coverage, Sample *new_sample);
-  int GetUpdates(std::list<Sample> *new_samples, uint64_t total_execs);
+  int GetUpdates(std::list<Sample *> &new_samples, uint64_t total_execs);
   int ReportCrash(Sample *crash, std::string &crash_desc);
 
 private:
@@ -50,4 +52,8 @@ private:
   bool have_server;
 
   socket_type sock;
+
+  bool keep_samples_in_memory;
+  std::string sample_dir;
+  size_t num_samples;
 };

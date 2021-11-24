@@ -19,6 +19,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common.h"
 #include "sample.h"
 #include "mutex.h"
 
@@ -35,6 +36,7 @@ Sample::Sample(const Sample &in) {
   size = in.size;
   bytes = (char *)malloc(size);
   memcpy(bytes,in.bytes,size);
+  filename = in.filename;
 }
 
 Sample& Sample::operator= (const Sample &in) {
@@ -42,7 +44,33 @@ Sample& Sample::operator= (const Sample &in) {
   size = in.size;
   bytes = (char *)malloc(size);
   memcpy(bytes,in.bytes,size);
+  filename = in.filename;
   return *this;
+}
+
+int Sample::Save() {
+  if (filename.empty()) {
+    FATAL("Attemting to save, but the default path is empty");
+  }
+  return Save(filename.c_str());
+}
+
+int Sample::Load() {
+  if (filename.empty()) {
+    FATAL("Attemting to load, but the default path is empty");
+  }
+  return Load(filename.c_str());
+}
+
+void Sample::FreeMemory() {
+  if (bytes) free(bytes);
+  bytes = NULL;
+}
+
+void Sample::EnsureLoaded() {
+  if (size == 0) return;
+  if (bytes) return;
+  Load();
 }
 
 int Sample::Save(const char * filename) {
