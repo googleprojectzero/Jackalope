@@ -99,6 +99,16 @@ The following command line arguments are supported:
 
 `-start_server` - Run a server process instead of fuzzing process.
 
+`-crash_retry` - Number of times to try reproduce a crash. Defaults to 10. Crashes that don't reproduce within this number of retries or don't reproduce when running without instrumentation are marked as flaky.
+
+`-coverage_retry` - Number of times to retry reproducing new coverage. Coverage that can't be reliably reproduced within this number of retry is considered flaky. Samples that contain only flaky coverage aren't saved.
+
+`-clean_target_on_coverage` - Restart the target when reproducing coverage. Defaults to true.
+
+`-minimize_samples` - Attempt to minimize new samples before saving them to the corpus. Defaults to true.
+
+`-iterations_per_round` - Number of times to mutate and run a sample from the corpus before moving on to the next sample. Defaults to 1000. You might consider decreasing this value for very slow targets.
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):
