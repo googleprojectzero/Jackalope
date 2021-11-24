@@ -37,6 +37,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
                                                 argc, argv,
                                                 use_deterministic_mutations);
 
+  int nrounds = GetIntOption("-iterations_per_round", argc, argv, 1000);
+
   // a pretty simple mutation strategy
 
   PSelectMutator *pselect = new PSelectMutator();
@@ -62,7 +64,7 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   if(!use_deterministic_mutations) {
     
     // and have 1000 rounds of this per sample cycle
-    NRoundMutator *mutator = new NRoundMutator(repeater, 1000);
+    NRoundMutator *mutator = new NRoundMutator(repeater, nrounds);
     return mutator;
     
   } else {
@@ -75,7 +77,13 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
     
     // do 1000 rounds of derministic mutations, will switch to nondeterministic mutations
     // once deterministic mutator is "done"
-    DtermininsticNondeterministicMutator *mutator = new DtermininsticNondeterministicMutator(deterministic_sequence, 500, repeater, 500);
+    DtermininsticNondeterministicMutator *mutator = 
+      new DtermininsticNondeterministicMutator(
+        deterministic_sequence, 
+        nrounds - (nrounds / 2),
+        repeater,
+        nrounds/2);
+
     return mutator;
   }
 }

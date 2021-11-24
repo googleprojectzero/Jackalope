@@ -41,8 +41,8 @@ class MutatorSampleContext;
 class Sample;
 class CoverageClient;
 
-#define CRASH_REPRODUCE_TIMES 10
-#define SAMPLE_RETRY_TIMES 10
+#define DEFAULT_CRASH_REPRODUCE_RETRIES 10
+#define DEFAULT_COVERAGE_REPRODUCE_RETRIES 3
 
 #define DELIVERY_RETRY_TIMES 100
 
@@ -223,6 +223,12 @@ protected:
   bool save_hangs;
   double acceptable_hang_ratio;
   double acceptable_crash_ratio;
+
+  bool minimize_samples;
+
+  int coverage_reproduce_retries;
+  int crash_reproduce_retries;
+  bool clean_target_on_coverage;
   
   bool should_restore_state;
   

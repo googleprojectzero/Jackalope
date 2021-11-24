@@ -95,6 +95,12 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   {
     should_restore_state = true;
   }
+
+  clean_target_on_coverage = GetBinaryOption("-clean_target_on_coverage", argc, argv, true);
+  coverage_reproduce_retries = GetIntOption("-coverage_retry", argc, argv, DEFAULT_COVERAGE_REPRODUCE_RETRIES);
+  crash_reproduce_retries = GetIntOption("-crash_retry", argc, argv, DEFAULT_CRASH_REPRODUCE_RETRIES);
+
+  minimize_samples = GetBinaryOption("-minimize_samples", argc, argv, true);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -290,7 +296,7 @@ RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Cov
 RunResult Fuzzer::TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t init_timeout, uint32_t timeout) {
   RunResult result;
 
-  for (int i = 0; i < CRASH_REPRODUCE_TIMES; i++) {
+  for (int i = 0; i < crash_reproduce_retries; i++) {
     total_execs++;
 
     if (!tc->sampleDelivery->DeliverSample(sample)) {
@@ -334,9 +340,9 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
   Coverage totalCoverage = initialCoverage;
 
   // have a clean target before retrying the sample
-  tc->instrumentation->CleanTarget();
+  if(clean_target_on_coverage) tc->instrumentation->CleanTarget();
 
-  for (int i = 0; i < SAMPLE_RETRY_TIMES; i++) {
+  for (int i = 0; i < coverage_reproduce_retries; i++) {
     Coverage retryCoverage, tmpCoverage;
 
     result = RunSampleAndGetCoverage(tc, sample, &retryCoverage, init_timeout, timeout);
@@ -364,7 +370,7 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
       *has_new_coverage = 1;
     }
 
-    if (trim) MinimizeSample(tc, sample, &stableCoverage, init_timeout, timeout);
+    if (trim && minimize_samples) MinimizeSample(tc, sample, &stableCoverage, init_timeout, timeout);
 
     output_mutex.Lock();
     char fileindex[20];
