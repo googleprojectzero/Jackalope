@@ -58,6 +58,9 @@ protected:
   // blockstart and blocksize are return values
   int GetRandBlock(size_t samplesize, size_t minblocksize, size_t maxblocksize, size_t *blockstart, size_t *blocksize, PRNG *prng);
   
+  void AddInterestingValue(char* data, size_t size, std::vector<Sample> &interesting_values);
+  template<typename T> void AddDefaultInterestingValues(std::vector<Sample>& interesting_values);
+
   template<typename T> T FlipEndian(T value) {
     T out = 0;
     for(int i = 0; i<sizeof(T); i++) {
@@ -424,10 +427,6 @@ class InterestingValueMutator : public Mutator {
 public:
   InterestingValueMutator(bool use_default_values = false);
 
-  template<typename T> void AddDefaultValues();
-  
-  void AddInterestingValue(char *data, size_t size);
-
   bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
 
 protected:
@@ -567,11 +566,7 @@ public:
 class DeterministicInterestingValueMutator : public BaseDeterministicMutator {
 public:
   DeterministicInterestingValueMutator(bool use_default_values = false);
-
-  template<typename T> void AddDefaultValues();
   
-  void AddInterestingValue(char *data, size_t size);
-
   bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
 
 protected:

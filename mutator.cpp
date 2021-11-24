@@ -162,7 +162,7 @@ bool BlockDuplicateMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector
   return true;
 }
 
-void InterestingValueMutator::AddInterestingValue(char *data, size_t size) {
+void Mutator::AddInterestingValue(char *data, size_t size, std::vector<Sample>& interesting_values) {
   Sample interesting_sample;
   interesting_sample.Init(data, size);
   interesting_values.push_back(interesting_sample);
@@ -180,13 +180,13 @@ bool InterestingValueMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vect
 
 InterestingValueMutator::InterestingValueMutator(bool use_default_values) {
   if (use_default_values) {
-    AddDefaultValues<uint16_t>();
-    AddDefaultValues<uint32_t>();
-    AddDefaultValues<uint64_t>();
+    AddDefaultInterestingValues<uint16_t>(interesting_values);
+    AddDefaultInterestingValues<uint32_t>(interesting_values);
+    // AddDefaultInterestingValues<uint64_t>(interesting_values);
   }
 }
 
-template<typename T> void InterestingValueMutator::AddDefaultValues() {
+template<typename T> void Mutator::AddDefaultInterestingValues(std::vector<Sample>& interesting_values) {
   uint32_t M[] = {2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
                   56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
                   136, 144, 152, 160, 168, 176, 184, 192, 200,
@@ -196,28 +196,28 @@ template<typename T> void InterestingValueMutator::AddDefaultValues() {
 
   T value;
   value = 0;
-  AddInterestingValue((char *)(&value), sizeof(value));
+  AddInterestingValue((char *)(&value), sizeof(value), interesting_values);
 
   value = 1;
   for (uint32_t i = 0; i < (sizeof(value) * 8); i++) {
-    AddInterestingValue((char *)(&value), sizeof(value));
+    AddInterestingValue((char *)(&value), sizeof(value), interesting_values);
     value = (value << 1);
   }
 
   for (uint32_t i = 0; i < (sizeof(M)/sizeof(M[0])); i++) {
     int32_t m = M[i];
     value = (T)(-1) / m + 1;
-    AddInterestingValue((char *)(&value), sizeof(value));
+    AddInterestingValue((char *)(&value), sizeof(value), interesting_values);
     value = FlipEndian(value);
-    AddInterestingValue((char *)(&value), sizeof(value));
+    AddInterestingValue((char *)(&value), sizeof(value), interesting_values);
   }
     
   for (uint32_t j = 0; j < (sizeof(N)/sizeof(N[0])); j++) {
     int32_t n = N[j];
     value = (T)(0) - n;
-    AddInterestingValue((char *)(&value), sizeof(value));
+    AddInterestingValue((char *)(&value), sizeof(value), interesting_values);
     value = FlipEndian(value);
-    AddInterestingValue((char *)(&value), sizeof(value));
+    AddInterestingValue((char *)(&value), sizeof(value), interesting_values);
   }
 }
 
@@ -401,52 +401,11 @@ bool DeterministicByteFlipMutator::Mutate(Sample *inout_sample, PRNG *prng, std:
   return true;
 }
 
-void DeterministicInterestingValueMutator::AddInterestingValue(char *data, size_t size) {
-  Sample interesting_sample;
-  interesting_sample.Init(data, size);
-  interesting_values.push_back(interesting_sample);
-}
-
 DeterministicInterestingValueMutator::DeterministicInterestingValueMutator(bool use_default_values) {
   if (use_default_values) {
-    AddDefaultValues<uint16_t>();
-    AddDefaultValues<uint32_t>();
-    AddDefaultValues<uint64_t>();
-  }
-}
-
-template<typename T> void DeterministicInterestingValueMutator::AddDefaultValues() {
-  uint32_t M[] = {2, 3, 4, 6, 8, 10, 12, 16, 24, 32, 40, 48,
-                  56, 64, 72, 80, 88, 96, 104, 112, 120, 128,
-                  136, 144, 152, 160, 168, 176, 184, 192, 200,
-                  208, 216, 224, 232, 240, 248, 256 };
-
-  int32_t N[] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
-
-  T value;
-  value = 0;
-  AddInterestingValue((char *)(&value), sizeof(value));
-
-  value = 1;
-  for (uint32_t i = 0; i < (sizeof(value) * 8); i++) {
-    AddInterestingValue((char *)(&value), sizeof(value));
-    value = (value << 1);
-  }
-
-  for (uint32_t i = 0; i < (sizeof(M)/sizeof(M[0])); i++) {
-    int32_t m = M[i];
-    value = (T)(-1) / m + 1;
-    AddInterestingValue((char *)(&value), sizeof(value));
-    value = FlipEndian(value);
-    AddInterestingValue((char *)(&value), sizeof(value));
-  }
-    
-  for (uint32_t j = 0; j < (sizeof(N)/sizeof(N[0])); j++) {
-    int32_t n = N[j];
-    value = (T)(0) - n;
-    AddInterestingValue((char *)(&value), sizeof(value));
-    value = FlipEndian(value);
-    AddInterestingValue((char *)(&value), sizeof(value));
+    AddDefaultInterestingValues<uint16_t>(interesting_values);
+    AddDefaultInterestingValues<uint32_t>(interesting_values);
+    // AddDefaultInterestingValues<uint64_t>(interesting_values);
   }
 }
 
