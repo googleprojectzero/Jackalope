@@ -16,46 +16,28 @@ limitations under the License.
 
 #pragma once
 
-#include <string>
-#include "sample.h"
-#include "shm.h"
-
-class SampleDelivery {
-public:
-  virtual ~SampleDelivery() {}
-  virtual void Init(int argc, char **argv) {}
-
-  // returns nonzero on success
-  virtual int DeliverSample(Sample *sample) = 0;
-};
-
-class FileSampleDelivery : public SampleDelivery {
-public:
-
-  void SetFilename(std::string filename) {
-    this->filename = filename;
-  }
-
-  int DeliverSample(Sample *sample);
-  
-protected:
-
-  std::string filename;
-};
-
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
 #include "windows.h"
 #endif
 
-class SHMSampleDelivery : public SampleDelivery {
+class SharedMemory {
 public:
-  SHMSampleDelivery(char *name, size_t size);
-  ~SHMSampleDelivery();
+  SharedMemory();
+  SharedMemory(char* name, size_t size);
+  ~SharedMemory();
 
-  int DeliverSample(Sample *sample);
+  void Open(char* name, size_t size);
+  void Close();
+
+  size_t GetSize() { return size; }
+  unsigned char* GetData() { return shm; }
 
 protected:
-  SharedMemory shmobj;
-  unsigned char *shm;
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+  HANDLE shm_handle;
+#else
+  int fd;
+#endif
+  size_t size;
+  unsigned char* shm;
 };
-

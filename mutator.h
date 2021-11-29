@@ -21,6 +21,7 @@ limitations under the License.
 #include "sample.h"
 #include "runresult.h"
 #include "mutex.h"
+#include "range.h"
 
 #include <vector>
 #include <set>
@@ -51,6 +52,7 @@ public:
   virtual bool CanGenerateSample() { return false;  }
   virtual bool GenerateSample(Sample* sample, PRNG* prng) { return false; }
   virtual void AddMutator(Mutator *mutator) { child_mutators.push_back(mutator); }
+  virtual void SetRanges(std::vector<Range>* ranges) { }
 
 protected:
   // a helper function to get a random chunk of sample (with size samplesize)
@@ -107,6 +109,12 @@ public:
     }
   }
   
+  virtual void SetRanges(std::vector<Range>* ranges) override {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->SetRanges(ranges);
+    }
+  }
+
   virtual void SaveContext(MutatorSampleContext *context, FILE *fp) override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
       child_mutators[i]->SaveContext(context->child_contexts[i], fp);
@@ -571,4 +579,23 @@ public:
 
 protected:
   std::vector<Sample> interesting_values;
+};
+
+// Mutator that mutates only set ranges using a child mutator
+class RangeMutator : public HierarchicalMutator {
+public:
+  RangeMutator(Mutator* child_mutator) {
+    AddMutator(child_mutator);
+  }
+
+  virtual void SetRanges(std::vector<Range>* ranges) {
+    HierarchicalMutator::SetRanges(ranges);
+    this->ranges = ranges;
+  }
+
+  virtual bool Mutate(Sample* inout_sample, PRNG* prng, std::vector<Sample*>& all_samples) override;
+
+protected:
+
+  std::vector<Range> *ranges;
 };

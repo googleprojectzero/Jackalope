@@ -21,83 +21,14 @@ int FileSampleDelivery::DeliverSample(Sample *sample) {
   return sample->Save(filename.c_str());
 }
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
-
 SHMSampleDelivery::SHMSampleDelivery(char *name, size_t size) {
-  shm_handle = CreateFileMapping(
-    INVALID_HANDLE_VALUE,
-    NULL,
-    PAGE_READWRITE,
-    0,
-    (DWORD)size,
-    name);
-
-  if (shm_handle == NULL) {
-    FATAL("CreateFileMapping failed, %x", GetLastError());
-  }
-
-  shm = (unsigned char *)MapViewOfFile(
-    shm_handle,          // handle to map object
-    FILE_MAP_ALL_ACCESS, // read/write permission
-    0,
-    0,
-    size
-  );
-
-  if (!shm) {
-    FATAL("MapViewOfFile failed");
-  }
+  shmobj.Open(name, size);
+  shm = shmobj.GetData();
 }
 
 SHMSampleDelivery::~SHMSampleDelivery() {
-    UnmapViewOfFile(shm);
-    CloseHandle(shm_handle);
+  shmobj.Close();
 }
-
-#else
-
-#include <unistd.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-
-SHMSampleDelivery::SHMSampleDelivery(char *name, size_t size) {
-  int res;
-  
-  this->size = size;
-  size_t name_size = strlen(name);
-  this->name = (char *)malloc(name_size + 1);
-  strcpy(this->name, name);
-  
-  // get shared memory file descriptor (NOT a file)
-  fd = shm_open(name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-  if (fd == -1)
-  {
-    FATAL("Error creating shared memory");
-  }
-
-  // extend shared memory object as by default it's initialized with size 0
-  res = ftruncate(fd, size);
-  if (res == -1)
-  {
-    FATAL("Error creating shared memory");
-  }
-
-  // map shared memory to process address space
-  shm = (unsigned char *)mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
-  if (shm == MAP_FAILED)
-  {
-    FATAL("Error creating shared memory");
-  }
-}
-
-SHMSampleDelivery::~SHMSampleDelivery() {
-  munmap(shm, size);
-  shm_unlink(name);
-  close(fd);
-  free(name);
-}
-
-#endif
 
 int SHMSampleDelivery::DeliverSample(Sample *sample) {
   uint32_t *size_ptr = (uint32_t *)shm;

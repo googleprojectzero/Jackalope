@@ -26,6 +26,8 @@ limitations under the License.
 #include "coverage.h"
 #include "instrumentation.h"
 #include "minimizer.h"
+#include "range.h"
+#include "rangetracker.h"
 
 #ifdef linux
 #include "sancovinstrumentation.h"
@@ -66,6 +68,7 @@ public:
     Mutator *mutator;
     Instrumentation * instrumentation;
     Minimizer* minimizer;
+    RangeTracker* range_tracker;
 
     //std::string target_cmd;
     int target_argc;
@@ -110,6 +113,7 @@ protected:
     Sample *sample;
     std::string sample_filename;
     MutatorSampleContext *context;
+    std::vector<Range> ranges;
  
     double priority;
     uint64_t sample_index;
@@ -156,6 +160,7 @@ protected:
   virtual Instrumentation *CreateInstrumentation(int argc, char **argv, ThreadContext *tc);
   virtual SampleDelivery* CreateSampleDelivery(int argc, char** argv, ThreadContext* tc);
   virtual Minimizer* CreateMinimizer(int argc, char** argv, ThreadContext* tc);
+  virtual RangeTracker* CreateRangeTracker(int argc, char** argv, ThreadContext* tc);
   virtual bool OutputFilter(Sample *original_sample, Sample *output_sample, ThreadContext* tc);
   virtual void AdjustSamplePriority(ThreadContext *tc, SampleQueueEntry *entry, int found_new_coverage);
 
@@ -227,6 +232,8 @@ protected:
   bool minimize_samples;
 
   bool keep_samples_in_memory;
+
+  bool track_ranges;
 
   int coverage_reproduce_retries;
   int crash_reproduce_retries;

@@ -111,6 +111,8 @@ The following command line arguments are supported:
 
 `-keep_samples_in_memory` - Whether to always keep all samples in memory. Defaults to true. Recommended unless the corpus is too large to fit in memory.
 
+`-track_ranges` - Enable the read range tracking feature. More information [here](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):

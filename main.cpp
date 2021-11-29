@@ -63,9 +63,18 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
     pselect->AddMutator(new SpliceMutator(2, 0.5), 0.1);
   }
 
+  Mutator* pselect_or_range = pselect;
+
+  // if we are tracking ranges, insert a RangeMutator
+  // between RepeatMutator and individual mutators
+  if (GetBinaryOption("-track_ranges", argc, argv, false)) {
+    RangeMutator* range_mutator = new RangeMutator(pselect);
+    pselect_or_range = range_mutator;
+  }
+
   // potentially repeat the mutation
   // (do two or more mutations in a single cycle
-  RepeatMutator *repeater = new RepeatMutator(pselect, 0.5);
+  RepeatMutator *repeater = new RepeatMutator(pselect_or_range, 0.5);
 
   if(!use_deterministic_mutations) {
     

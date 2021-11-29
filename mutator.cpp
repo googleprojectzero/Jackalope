@@ -427,4 +427,35 @@ bool DeterministicInterestingValueMutator::Mutate(Sample *inout_sample, PRNG *pr
   return true;
 }
 
+bool RangeMutator::Mutate(Sample* inout_sample, PRNG* prng, std::vector<Sample*>& all_samples) {
+  Mutator* child_mutator = child_mutators[0];
+
+  if (ranges->empty()) {
+    return child_mutator->Mutate(inout_sample, prng, all_samples);
+  }
+
+  // pick a range
+  Range& range = (*ranges)[prng->Rand() % ranges->size()];
+
+  // printf("Mutating range %zd %zd\n", range.from, range.to);
+
+  // extract the part we want to mutate
+  Sample rangesample;
+  inout_sample->Crop(range.from, range.to, &rangesample);
+
+  // mutate the cropped sample (if not empty)
+  if (inout_sample->size == 0) {
+    return child_mutator->Mutate(inout_sample, prng, all_samples);
+  } else {
+    child_mutator->Mutate(&rangesample, prng, all_samples);
+  }
+
+  // put the cropped part back where it belongs
+  if (range.from + rangesample.size > inout_sample->size) {
+    inout_sample->Resize(range.from + rangesample.size);
+  }
+  memcpy(inout_sample->bytes + range.from, rangesample.bytes, rangesample.size);
+
+  return true;
+}
 

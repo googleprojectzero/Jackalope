@@ -32,6 +32,12 @@ Sample::~Sample() {
   if(bytes) free(bytes);
 }
 
+void Sample::Clear() {
+  if (bytes) free(bytes);
+  bytes = NULL;
+  filename.clear();
+}
+
 Sample::Sample(const Sample &in) {
   size = in.size;
   bytes = (char *)malloc(size);
@@ -134,6 +140,16 @@ void Sample::Trim(size_t new_size) {
   } else {
     bytes = (char *)realloc(bytes, this->size);
   }
+}
+
+void Sample::Crop(size_t from, size_t to, Sample* out) {
+  out->Clear();
+
+  if (from >= to) return;
+  if (from > size) return;
+  if (to > size) to = size;
+
+  out->Init(this->bytes + from, to - from);
 }
 
 void Sample::Resize(size_t new_size) {

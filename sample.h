@@ -35,6 +35,8 @@ public:
   Sample(const Sample &in);
   Sample& operator= (const Sample &in);
 
+  void Clear();
+
   int Save(const char * filename);
 
   int Save();
@@ -56,6 +58,8 @@ public:
   
   void Resize(size_t new_size);
   
+  void Crop(size_t from, size_t to, Sample* out);
+
   size_t FindFirstDiff(Sample &other);
 };
 

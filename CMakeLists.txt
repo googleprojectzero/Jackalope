@@ -68,6 +68,11 @@ add_library(fuzzerlib STATIC
   server.h
   thread.cpp
   thread.h
+  shm.cpp
+  shm.h
+  range.h
+  rangetracker.h
+  rangetracker.cpp
   mutators/grammar/grammar.h
   mutators/grammar/grammar.cpp
   mutators/grammar/grammarmutator.h

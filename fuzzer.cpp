@@ -103,6 +103,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   minimize_samples = GetBinaryOption("-minimize_samples", argc, argv, true);
 
   keep_samples_in_memory = GetBinaryOption("-keep_samples_in_memory", argc, argv, true);
+
+  track_ranges = GetBinaryOption("-track_ranges", argc, argv, false);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -374,6 +376,19 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
 
     if (trim && minimize_samples) MinimizeSample(tc, sample, &stableCoverage, init_timeout, timeout);
 
+    std::vector<Range> ranges;
+    if (track_ranges) {
+      // need to rerun the sample as the minimizer could have changed ranges
+      Coverage tmp_coverage;
+      result = RunSampleAndGetCoverage(tc, sample, &tmp_coverage, init_timeout, timeout);
+      // this could fail, but the chance is it will be OK
+      // If it fails and no ranges are extracted, 
+      // we'll just mutate the entire sample
+      if (result == OK) {
+        tc->range_tracker->ExtractRanges(&ranges);
+      }
+    }
+
     output_mutex.Lock();
     char fileindex[20];
     sprintf(fileindex, "%05lld", num_samples);
@@ -400,6 +415,7 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
     new_entry->priority = 0;
     new_entry->sample_index = num_samples - 1;
     new_entry->sample_filename = filename;
+    new_entry->ranges = ranges;
 
     if (!keep_samples_in_memory) {
       new_sample->filename = outfile;
@@ -651,6 +667,8 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
   
   tc->mutator->InitRound(entry->sample, entry->context);
 
+  if (track_ranges) tc->mutator->SetRanges(&entry->ranges);
+
   printf("Fuzzing sample %05lld\n", entry->sample_index);
 
   job->discard_sample = false;
@@ -843,6 +861,7 @@ Fuzzer::ThreadContext *Fuzzer::CreateThreadContext(int argc, char **argv, int th
   tc->instrumentation = CreateInstrumentation(argc, argv, tc);
   tc->sampleDelivery = CreateSampleDelivery(argc, argv, tc);
   tc->minimizer = CreateMinimizer(argc, argv, tc);
+  tc->range_tracker = CreateRangeTracker(argc, argv, tc);
   tc->coverage_initialized = false;
   
   return tc;
@@ -914,6 +933,21 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
   }
 }
 
+RangeTracker* Fuzzer::CreateRangeTracker(int argc, char** argv, ThreadContext* tc) {
+  if (!track_ranges) {
+    return new RangeTracker();
+  } else {
+  #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+    string shm_name = string("shm_ranges_") + std::to_string(GetCurrentProcessId()) + "_" + std::to_string(tc->thread_id);
+#else
+    string shm_name = string("/shm_ranges_") + std::to_string(getpid()) + "_" + std::to_string(tc->thread_id);
+#endif
+    ReplaceTargetCmdArg(tc, "@@ranges", shm_name.c_str());
+
+    return new SHMRangeTracker((char*)shm_name.c_str(), RANGE_SHM_SIZE);
+  }
+}
+
 Minimizer* Fuzzer::CreateMinimizer(int argc, char** argv, ThreadContext* tc) {
   SimpleTrimmer* trimmer = new SimpleTrimmer();
   return trimmer;
@@ -936,6 +970,10 @@ void Fuzzer::SampleQueueEntry::Save(FILE *fp) {
   fwrite(&num_hangs, sizeof(num_hangs), 1, fp);
   fwrite(&num_newcoverage, sizeof(num_newcoverage), 1, fp);
   fwrite(&discarded, sizeof(discarded), 1, fp);
+
+  uint64_t ranges_size = ranges.size();
+  fwrite(&ranges_size, sizeof(ranges_size), 1, fp);
+  fwrite(ranges.data(), sizeof(ranges[0]), ranges_size, fp);
 }
 
 void Fuzzer::SampleQueueEntry::Load(FILE *fp) {
@@ -954,4 +992,9 @@ void Fuzzer::SampleQueueEntry::Load(FILE *fp) {
   fread(&num_hangs, sizeof(num_hangs), 1, fp);
   fread(&num_newcoverage, sizeof(num_newcoverage), 1, fp);
   fread(&discarded, sizeof(discarded), 1, fp);
+
+  uint64_t ranges_size;
+  fread(&ranges_size, sizeof(ranges_size), 1, fp);
+  ranges.resize(ranges_size);
+  fread(ranges.data(), sizeof(ranges[0]), ranges_size, fp);
 }
