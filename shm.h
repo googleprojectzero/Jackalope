@@ -38,6 +38,7 @@ protected:
 #else
   int fd;
 #endif
+  char *name;
   size_t size;
   unsigned char* shm;
 };

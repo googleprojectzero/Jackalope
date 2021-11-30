@@ -588,7 +588,7 @@ public:
     AddMutator(child_mutator);
   }
 
-  virtual void SetRanges(std::vector<Range>* ranges) {
+  virtual void SetRanges(std::vector<Range>* ranges) override {
     HierarchicalMutator::SetRanges(ranges);
     this->ranges = ranges;
   }
