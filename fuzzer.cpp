@@ -105,6 +105,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   keep_samples_in_memory = GetBinaryOption("-keep_samples_in_memory", argc, argv, true);
 
   track_ranges = GetBinaryOption("-track_ranges", argc, argv, false);
+
+  Sample::max_size = (size_t)GetIntOption("-max_sample_size", argc, argv, DEFAULT_MAX_SAMPLE_SIZE);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -613,9 +615,9 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
       printf("Running input sample %s\n", filename.c_str());
       job->sample = new Sample();
       job->sample->Load(filename.c_str());
-      if (job->sample->size > MAX_SAMPLE_SIZE) {
+      if (job->sample->size > Sample::max_size) {
         WARN("Input sample larger than maximum sample size. Will be trimmed");
-        job->sample->Trim(MAX_SAMPLE_SIZE);
+        job->sample->Trim(Sample::max_size);
       }
       samples_pending++;
     }
@@ -678,7 +680,7 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
   while (1) {
     Sample mutated_sample = *entry->sample;
     if (!tc->mutator->Mutate(&mutated_sample, tc->prng, tc->all_samples_local)) break;
-    if (mutated_sample.size > MAX_SAMPLE_SIZE) {
+    if (mutated_sample.size > Sample::max_size) {
       continue;
     }
 
@@ -925,7 +927,7 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
 #endif
     ReplaceTargetCmdArg(tc, "@@", shm_name.c_str());
 
-    SHMSampleDelivery* sampleDelivery = new SHMSampleDelivery((char*)shm_name.c_str(), MAX_SAMPLE_SIZE + 4);
+    SHMSampleDelivery* sampleDelivery = new SHMSampleDelivery((char*)shm_name.c_str(), Sample::max_size + 4);
     sampleDelivery->Init(argc, argv);
     return sampleDelivery;
   } else {

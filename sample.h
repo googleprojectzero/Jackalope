@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "mutex.h"
 
-#define MAX_SAMPLE_SIZE 1000000
+#define DEFAULT_MAX_SAMPLE_SIZE 1000000
 
 class Sample {
 public:
@@ -61,6 +61,8 @@ public:
   void Crop(size_t from, size_t to, Sample* out);
 
   size_t FindFirstDiff(Sample &other);
+
+  static size_t max_size;
 };
 
 // a Trie-like structure whose purpose is to be able to

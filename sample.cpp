@@ -23,6 +23,8 @@ limitations under the License.
 #include "sample.h"
 #include "mutex.h"
 
+size_t Sample::max_size = DEFAULT_MAX_SAMPLE_SIZE;
+
 Sample::Sample() {
   size = 0;
   bytes = NULL;

@@ -95,10 +95,10 @@ bool BlockFlipMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Samp
 bool AppendMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   // printf("In AppendMutator::Mutate\n");
   size_t old_size = inout_sample->size;
-  if (old_size >= MAX_SAMPLE_SIZE) return true;
+  if (old_size >= Sample::max_size) return true;
   size_t append = prng->Rand(min_append, max_append);
-  if ((old_size + append) > MAX_SAMPLE_SIZE) {
-    append = MAX_SAMPLE_SIZE - old_size;
+  if ((old_size + append) > Sample::max_size) {
+    append = Sample::max_size - old_size;
   }
   if (append <= 0) return true;
   size_t new_size = old_size + append;
@@ -114,10 +114,10 @@ bool AppendMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
 bool BlockInsertMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   // printf("In BlockInsertMutator::Mutate\n");
   size_t old_size = inout_sample->size;
-  if (old_size >= MAX_SAMPLE_SIZE) return true;
+  if (old_size >= Sample::max_size) return true;
   size_t to_insert = prng->Rand(min_insert, max_insert);
-  if ((old_size + to_insert) > MAX_SAMPLE_SIZE) {
-    to_insert = MAX_SAMPLE_SIZE - old_size;
+  if ((old_size + to_insert) > Sample::max_size) {
+    to_insert = Sample::max_size - old_size;
   }
   size_t where = prng->Rand(0, (int)old_size);
   size_t new_size = old_size + to_insert;
@@ -141,12 +141,12 @@ bool BlockInsertMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sa
 
 bool BlockDuplicateMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   // printf("In BlockDuplicateMutator::Mutate\n");
-  if (inout_sample->size >= MAX_SAMPLE_SIZE) return true;
+  if (inout_sample->size >= Sample::max_size) return true;
   size_t blockpos, blocksize;
   if (!GetRandBlock(inout_sample->size, min_block_size, max_block_size, &blockpos, &blocksize, prng)) return true;
   int64_t blockcount = prng->Rand(min_duplicate_cnt, max_duplicate_cnt);
-  if ((inout_sample->size + blockcount * blocksize) > MAX_SAMPLE_SIZE)
-    blockcount = (MAX_SAMPLE_SIZE - (int64_t)inout_sample->size) / blocksize;
+  if ((inout_sample->size + blockcount * blocksize) > Sample::max_size)
+    blockcount = (Sample::max_size - (int64_t)inout_sample->size) / blocksize;
   if (blockcount <= 0) return true;
   char *newbytes;
   newbytes = (char *)malloc(inout_sample->size + blockcount * blocksize);
@@ -260,7 +260,7 @@ bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
       free(inout_sample->bytes);
       inout_sample->bytes = new_bytes;
       inout_sample->size = new_sample_size;
-      if (inout_sample->size > MAX_SAMPLE_SIZE) inout_sample->Trim(MAX_SAMPLE_SIZE);
+      if (inout_sample->size > Sample::max_size) inout_sample->Trim(Sample::max_size);
       return true;
     }
   } else if(points != 2) {
@@ -280,9 +280,9 @@ bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
     memcpy(new_bytes, inout_sample->bytes, blockstart1);
     memcpy(new_bytes + blockstart1, other_sample->bytes + blockstart2, blocksize2);
     memcpy(new_bytes + blockstart1 + blocksize2, inout_sample->bytes + blockstart3, blocksize3);
-    if(new_sample_size > MAX_SAMPLE_SIZE) {
-      new_sample_size = MAX_SAMPLE_SIZE;
-      new_bytes = (char *)realloc(new_bytes, MAX_SAMPLE_SIZE);
+    if(new_sample_size > Sample::max_size) {
+      new_sample_size = Sample::max_size;
+      new_bytes = (char *)realloc(new_bytes, Sample::max_size);
     }
     free(inout_sample->bytes);
     inout_sample->bytes = new_bytes;

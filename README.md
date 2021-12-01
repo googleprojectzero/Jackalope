@@ -113,6 +113,8 @@ The following command line arguments are supported:
 
 `-deterministic_only` - Prioritize deterministic mutations. Note: even with this flag, the fuzzer is still going to use nondeterministic mutations, but only after all deterministic mutations have been exhausted. It might be useful when running with a `-server` to have a single clinent instance perform deterministic mutations.
 
+`-max_sample_size` - The maximum sample size to use. All input samples larger than `max_sample_size` get trimmed and mutators can't produce new samples which exceed that sie. Defaults to 1000000. Warning: When using shared memory sample delivery, `max_sample_size` must match the maximum sample size expected by the target, e.g. like in the test target [here](https://github.com/googleprojectzero/Jackalope/blob/3301a9ac6c6f1483f2d565d372015302e85e6ae2/test.cpp#L33).
+
 `-keep_samples_in_memory` - Whether to always keep all samples in memory. Defaults to true. Recommended unless the corpus is too large to fit in memory.
 
 `-track_ranges` - Enable the read range tracking feature. More information [here](https://github.com/googleprojectzero/Jackalope/blob/main/README_ranges.md).
