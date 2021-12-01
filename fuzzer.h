@@ -240,6 +240,8 @@ protected:
   bool clean_target_on_coverage;
   
   bool should_restore_state;
+
+  bool dry_run;
   
   Mutex crash_mutex;
   std::unordered_map<std::string, int> unique_crashes;

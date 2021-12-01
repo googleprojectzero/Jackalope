@@ -107,6 +107,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   track_ranges = GetBinaryOption("-track_ranges", argc, argv, false);
 
   Sample::max_size = (size_t)GetIntOption("-max_sample_size", argc, argv, DEFAULT_MAX_SAMPLE_SIZE);
+
+  dry_run = GetBinaryOption("-dry_run", argc, argv, false);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -596,6 +598,10 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
   }
 
   // create a job according to the state
+  if ((state == FUZZING) && dry_run) {
+    printf("Dry run done");
+    exit(0);
+  }
 
   if (state == FUZZING) {
     if (sample_queue.empty()) {
