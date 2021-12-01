@@ -37,6 +37,10 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
                                                 argc, argv,
                                                 use_deterministic_mutations);
 
+  bool deterministic_only = GetBinaryOption("-deterministic_only",
+                                            argc, argv,
+                                            false);
+
   int nrounds = GetIntOption("-iterations_per_round", argc, argv, 1000);
 
   // a pretty simple mutation strategy
@@ -76,9 +80,9 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   // (do two or more mutations in a single cycle
   RepeatMutator *repeater = new RepeatMutator(pselect_or_range, 0.5);
 
-  if(!use_deterministic_mutations) {
+  if(!use_deterministic_mutations && !deterministic_only) {
     
-    // and have 1000 rounds of this per sample cycle
+    // and have nrounds of this per sample cycle
     NRoundMutator *mutator = new NRoundMutator(repeater, nrounds);
     return mutator;
     
@@ -90,14 +94,22 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
     // ..followed by deterministc interesting values
     deterministic_sequence->AddMutator(new DeterministicInterestingValueMutator(true));
     
+    size_t deterministic_rounds, nondeterministic_rounds;
+    if (deterministic_only) {
+      deterministic_rounds = nrounds;
+    } else {
+      deterministic_rounds = nrounds / 2;
+    }
+    nondeterministic_rounds = nrounds - deterministic_rounds;
+
     // do 1000 rounds of derministic mutations, will switch to nondeterministic mutations
     // once deterministic mutator is "done"
     DtermininsticNondeterministicMutator *mutator = 
       new DtermininsticNondeterministicMutator(
         deterministic_sequence, 
-        nrounds - (nrounds / 2),
+        deterministic_rounds,
         repeater,
-        nrounds/2);
+        nondeterministic_rounds);
 
     return mutator;
   }

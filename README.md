@@ -109,6 +109,10 @@ The following command line arguments are supported:
 
 `-iterations_per_round` - Number of times to mutate and run a sample from the corpus before moving on to the next sample. Defaults to 1000. You might consider decreasing this value for very slow targets.
 
+`-deterministic_mutations` - Use deterministic in addition to nondeterninistic mutations. Defaults to true unless the `-server` flag is used.
+
+`-deterministic_only` - Prioritize deterministic mutations. Note: even with this flag, the fuzzer is still going to use nondeterministic mutations, but only after all deterministic mutations have been exhausted. It might be useful when running with a `-server` to have a single clinent instance perform deterministic mutations.
+
 `-keep_samples_in_memory` - Whether to always keep all samples in memory. Defaults to true. Recommended unless the corpus is too large to fit in memory.
 
 `-track_ranges` - Enable the read range tracking feature. More information [here](https://github.com/googleprojectzero/Jackalope/blob/main/README_ranges.md).
