@@ -173,7 +173,7 @@ protected:
   
   bool MagicOutputFilter(Sample *original_sample, Sample *output_sample, const char *magic, size_t magic_size);
 
-  RunResult RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout);
+  RunResult RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout, Sample *original_sample);
   RunResult RunSampleAndGetCoverage(ThreadContext* tc, Sample* sample, Coverage* coverage, uint32_t init_timeout, uint32_t timeout);
   RunResult TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t init_timeout, uint32_t timeout);
   void MinimizeSample(ThreadContext *tc, Sample *sample, Coverage* stable_coverage, uint32_t init_timeout, uint32_t timeout);

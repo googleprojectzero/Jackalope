@@ -324,7 +324,7 @@ RunResult Fuzzer::TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t 
   return result;
 }
 
-RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout) {
+RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout, Sample *original_sample) {
   if (has_new_coverage) {
     *has_new_coverage = 0;
   }
@@ -413,8 +413,13 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
     new_entry->sample = new_sample;
     new_entry->context = tc->mutator->CreateSampleContext(new_entry->sample);
     if(TrackHotOffsets()) {
-      size_t mutation_offset = sample_trie.AddSample(new_sample);
-      tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
+      if (keep_samples_in_memory) {
+        size_t mutation_offset = sample_trie.AddSample(new_sample);
+        tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
+      } else if (original_sample) {
+        size_t mutation_offset = original_sample->FindFirstDiff(*new_sample);
+        tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
+      }
     }
     new_entry->priority = 0;
     new_entry->sample_index = num_samples - 1;
@@ -691,7 +696,7 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
     }
 
     int has_new_coverage;
-    RunResult result = RunSample(tc, &mutated_sample, &has_new_coverage, true, true, init_timeout, timeout);
+    RunResult result = RunSample(tc, &mutated_sample, &has_new_coverage, true, true, init_timeout, timeout, entry->sample);
     AdjustSamplePriority(tc, entry, has_new_coverage);
     tc->mutator->NotifyResult(result, has_new_coverage);
 
@@ -730,7 +735,7 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
 void Fuzzer::ProcessSample(ThreadContext* tc, FuzzerJob* job) {
   int has_new_coverage = 0;
   job->sample->EnsureLoaded();
-  RunResult result = RunSample(tc, job->sample, &has_new_coverage, false, false, init_timeout, corpus_timeout);
+  RunResult result = RunSample(tc, job->sample, &has_new_coverage, false, false, init_timeout, corpus_timeout, NULL);
   if (result == CRASH) {
     WARN("Input sample resulted in a crash");
   } else if (result == HANG) {
