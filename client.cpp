@@ -230,3 +230,16 @@ int CoverageClient::GetUpdates(std::list<Sample *> &new_samples, uint64_t total_
   DisconnectFromServer();
   return 1;
 }
+
+void CoverageClient::SaveState(FILE* fp) {
+  fwrite(&last_timestamp, sizeof(last_timestamp), 1, fp);
+  fwrite(&client_id, sizeof(last_timestamp), 1, fp);
+  fwrite(&num_samples, sizeof(last_timestamp), 1, fp);
+}
+
+void CoverageClient::LoadState(FILE* fp) {
+  fread(&last_timestamp, sizeof(last_timestamp), 1, fp);
+  fread(&client_id, sizeof(last_timestamp), 1, fp);
+  fread(&num_samples, sizeof(last_timestamp), 1, fp);
+}
+

@@ -37,14 +37,17 @@ public:
   int GetUpdates(std::list<Sample *> &new_samples, uint64_t total_execs);
   int ReportCrash(Sample *crash, std::string &crash_desc);
 
+  void SaveState(FILE* fp);
+  void LoadState(FILE* fp);
+
 private:
   int TryConnectToServer();
   int ConnectToServer(char command);
   int DisconnectFromServer();
 
   uint64_t last_timestamp;
-
   uint64_t client_id;
+  uint64_t num_samples;
 
   std::string server_ip;
   uint16_t server_port;
@@ -55,5 +58,4 @@ private:
 
   bool keep_samples_in_memory;
   std::string sample_dir;
-  size_t num_samples;
 };

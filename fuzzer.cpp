@@ -800,6 +800,13 @@ void Fuzzer::SaveState(ThreadContext *tc) {
     tc->mutator->SaveContext(entry->context, fp);
   }
 
+  if (server) server->SaveState(fp);
+
+  // let every correctly saved state end with
+  // hex('fuzzstat');
+  uint64_t sentry = 0x66757a7a73746174;
+  fwrite(&sentry, sizeof(sentry), 1, fp);
+
   fclose(fp);
 
   coverage_mutex.Unlock();
@@ -845,6 +852,14 @@ void Fuzzer::RestoreState(ThreadContext *tc) {
     if(!entry->discarded) sample_queue.push(entry);
   }
   
+  if (server) server->LoadState(fp);
+
+  uint64_t sentry;
+  fread(&sentry, sizeof(sentry), 1, fp);
+  if (sentry != 0x66757a7a73746174) {
+    FATAL("State could not be restored correctly");
+  }
+
   fclose(fp);
   
   coverage_mutex.Unlock();
