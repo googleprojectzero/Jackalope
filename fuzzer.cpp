@@ -842,6 +842,12 @@ void Fuzzer::RestoreState(ThreadContext *tc) {
     entry->context = tc->mutator->CreateSampleContext(sample);
     tc->mutator->LoadContext(entry->context, fp);
 
+    if (TrackHotOffsets()) {
+      if (keep_samples_in_memory) {
+        sample_trie.AddSample(entry->sample);
+      }
+    }
+
     if (!keep_samples_in_memory) {
       entry->sample->filename = outfile;
       entry->sample->FreeMemory();
