@@ -1,5 +1,5 @@
-#include "grammarmutator.h"
 #include "common.h"
+#include "grammarmutator.h"
 
 #define MUTATOR_REPEAT_PROB 0.5
 
