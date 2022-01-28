@@ -15,6 +15,14 @@
 cmake_minimum_required(VERSION "3.1")
 set (CMAKE_CXX_STANDARD 17)
 
+# Determine whether TinyInst should be build for arm64 or x86
+if(APPLE AND NOT DEFINED ${ARCHITECTURE})
+  EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
+  if(${ARCHITECTURE} MATCHES arm64)
+    add_definitions(-DARM64)
+  endif()
+endif()
+
 if(UNIX AND NOT APPLE)
   set(LINUX TRUE)
 endif()
