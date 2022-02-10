@@ -109,6 +109,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   Sample::max_size = (size_t)GetIntOption("-max_sample_size", argc, argv, DEFAULT_MAX_SAMPLE_SIZE);
 
   dry_run = GetBinaryOption("-dry_run", argc, argv, false);
+  
+  incremental_coverage = GetBinaryOption("-incremental_coverage", argc, argv, true);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -339,6 +341,12 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
 
   if (initialCoverage.empty()) return result;
 
+  if(!incremental_coverage) {
+    Coverage new_thread_coverage;
+    CoverageDifference(tc->thread_coverage, initialCoverage, new_thread_coverage);
+    if(new_thread_coverage.empty()) return result;
+  }
+  
   // printf("found new coverage: \n");
   // PrintCoverage(initialCoverage);
 
@@ -447,7 +455,11 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
   // printf("Total coverage:\n");
   // PrintCoverage(totalCoverage);
 
-  tc->instrumentation->IgnoreCoverage(totalCoverage);
+  if(incremental_coverage) {
+    tc->instrumentation->IgnoreCoverage(totalCoverage);
+  } else {
+    MergeCoverage(tc->thread_coverage, totalCoverage);
+  }
 
   return result;
 }
@@ -535,9 +547,11 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
   // after restoring the state
   // ignore the previously seen (restored) coverage
   if(!tc->coverage_initialized) {
-    coverage_mutex.Lock();
-    tc->instrumentation->IgnoreCoverage(fuzzer_coverage);
-    coverage_mutex.Unlock();
+    if(incremental_coverage) {
+      coverage_mutex.Lock();
+      tc->instrumentation->IgnoreCoverage(fuzzer_coverage);
+      coverage_mutex.Unlock();
+    }
     tc->coverage_initialized = true;
   }
 

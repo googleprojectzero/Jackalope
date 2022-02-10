@@ -69,6 +69,9 @@ public:
     Instrumentation * instrumentation;
     Minimizer* minimizer;
     RangeTracker* range_tracker;
+    
+    // only collected with incremental_coverage=off
+    Coverage thread_coverage;
 
     //std::string target_cmd;
     int target_argc;
@@ -242,6 +245,8 @@ protected:
   bool should_restore_state;
 
   bool dry_run;
+  
+  bool incremental_coverage;
   
   Mutex crash_mutex;
   std::unordered_map<std::string, int> unique_crashes;
