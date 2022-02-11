@@ -204,7 +204,10 @@ protected:
   std::string sample_dir;
   std::string crash_dir;
   std::string hangs_dir;
-
+  std::string ext;
+  std::time_t start_time;
+  std::time_t cur_time;
+ 
   //std::string target_cmd;
   int target_argc;
   char **target_argv;

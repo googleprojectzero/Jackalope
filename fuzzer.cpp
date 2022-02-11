@@ -56,6 +56,15 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   if (!option) PrintUsage();
   this->out_dir = option;
 
+  option = GetOption("-ext", argc, argv);
+  if (!option)
+      this->ext = "";
+  else
+      this->ext = option;
+
+  printf("Ext Option : %s\n",this->ext.c_str());
+  
+
   num_threads = GetIntOption("-nthreads", argc, argv, 1);
 
   int target_opt_ind = 0;
@@ -139,6 +148,8 @@ Fuzzer::ThreadContext::~ThreadContext() {
 }
 
 void Fuzzer::Run(int argc, char **argv) {
+
+  start_time = time(NULL);
   if (GetOption("-start_server", argc, argv)) {
     // run the server
     printf("Running as server\n");
@@ -185,8 +196,16 @@ void Fuzzer::Run(int argc, char **argv) {
 
   uint64_t last_execs = 0;
   
-  uint32_t secs_to_sleep = 1;
+  uint32_t secs_to_sleep = 3;
   
+  uint64_t secs_since_last_save = 0;
+
+  // Add for more info
+  uint32_t toks = 1;
+  size_t num_offsets_before = 0;
+  time_t last_new_time = start_time;
+  uint64_t secs_since_last_new = 0;
+  uint64_t secs_since_start = 0;
   while (1) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
     Sleep(secs_to_sleep * 1000);
@@ -200,8 +219,23 @@ void Fuzzer::Run(int argc, char **argv) {
       num_offsets += iter->offsets.size();
     }
     coverage_mutex.Unlock();
+
+    if (num_offsets != num_offsets_before) {
+        num_offsets_before = num_offsets;
+        last_new_time = time(NULL);
+    }
     
     printf("\nTotal execs: %lld\nUnique samples: %lld (%lld discarded)\nCrashes: %lld (%lld unique)\nHangs: %lld\nOffsets: %zu\nExecs/s: %lld\n", total_execs, num_samples, num_samples_discarded, num_crashes, num_unique_crashes, num_hangs, num_offsets, (total_execs - last_execs) / secs_to_sleep);
+    //printf("Tiks: %lld \n", toks);
+    cur_time = time(NULL);
+    secs_since_last_new = std::difftime(cur_time, last_new_time);
+    secs_since_start = std::difftime(cur_time, start_time);
+    //printf("Start Time      : %s", ctime(&start_time) );
+    printf("Continued Time  : %lld hours %lld mins %lld secs\n", secs_since_start / 3600, (secs_since_start % 3600) / 60, (secs_since_start % 60));
+    printf("Last New Offs   : %lld hours %lld mins %lld secs\n", secs_since_last_new/3600, (secs_since_last_new%3600)/60 , (secs_since_last_new % 60));
+    
+    toks++;
+    toks = toks % 10;
     last_execs = total_execs;
   }
 }
