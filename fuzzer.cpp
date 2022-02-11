@@ -991,6 +991,8 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
   if (!option || !strcmp(option, "file")) {
 
     string outfile = DirJoin(out_dir, string("input_") + std::to_string(tc->thread_id));
+    if (this->ext != "")
+        outfile = outfile + string(".") + this->ext;
     ReplaceTargetCmdArg(tc, "@@", outfile.c_str());
 
     FileSampleDelivery* sampleDelivery = new FileSampleDelivery();
