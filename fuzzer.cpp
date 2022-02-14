@@ -203,6 +203,11 @@ void Fuzzer::Run(int argc, char **argv) {
     
     printf("\nTotal execs: %lld\nUnique samples: %lld (%lld discarded)\nCrashes: %lld (%lld unique)\nHangs: %lld\nOffsets: %zu\nExecs/s: %lld\n", total_execs, num_samples, num_samples_discarded, num_crashes, num_unique_crashes, num_hangs, num_offsets, (total_execs - last_execs) / secs_to_sleep);
     last_execs = total_execs;
+    
+    if (dry_run) {
+      printf("\nDry run done\n");
+      exit(0);
+    }
   }
 }
 
@@ -617,12 +622,7 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
   }
 
   // create a job according to the state
-  if ((state == FUZZING) && dry_run) {
-    printf("Dry run done");
-    exit(0);
-  }
-
-  if (state == FUZZING) {
+  if (state == FUZZING && !dry_run) {
     if (sample_queue.empty()) {
       job->type = WAIT;
     } else {
