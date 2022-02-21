@@ -262,6 +262,11 @@ void Fuzzer::Run(int argc, char **argv) {
     toks++;
     toks = toks % 10;
     last_execs = total_execs;
+    
+    if (state == FUZZING && dry_run) {
+      printf("\nDry run done\n");
+      exit(0);
+    }
   }
 
   log_file.close();
@@ -678,12 +683,7 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
   }
 
   // create a job according to the state
-  if ((state == FUZZING) && dry_run) {
-    printf("Dry run done");
-    exit(0);
-  }
-
-  if (state == FUZZING) {
+  if (state == FUZZING && !dry_run) {
     if (sample_queue.empty()) {
       job->type = WAIT;
     } else {
