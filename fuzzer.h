@@ -21,6 +21,7 @@ limitations under the License.
 #include <vector>
 #include <queue>
 #include <unordered_map>
+#include <fstream>
 #include "prng.h"
 #include "mutex.h"
 #include "coverage.h"
@@ -205,9 +206,10 @@ protected:
   std::string crash_dir;
   std::string hangs_dir;
   std::string ext;
+  std::string log_file_name;
   std::time_t start_time;
   std::time_t cur_time;
- 
+  std::ofstream log_file;
   //std::string target_cmd;
   int target_argc;
   char **target_argv;

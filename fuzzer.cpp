@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "common.h"
 #include "sample.h"
 #include "fuzzer.h"
@@ -39,7 +40,7 @@ void Fuzzer::PrintUsage() {
 
 void Fuzzer::ParseOptions(int argc, char **argv) {
   server_update_interval_ms = 5 * 60 * 1000;
-  acceptable_hang_ratio = 0.01;
+  acceptable_hang_ratio = 0.5;
   acceptable_crash_ratio = 0.02;
 
   num_threads = 1;
@@ -149,7 +150,11 @@ Fuzzer::ThreadContext::~ThreadContext() {
 
 void Fuzzer::Run(int argc, char **argv) {
 
+  char time_buf[32];
   start_time = time(NULL);
+  std::tm* ptm = std::localtime(&start_time);
+  std::strftime(time_buf, 32, "%Y-%m-%d-%H.%M.%S", ptm);
+
   if (GetOption("-start_server", argc, argv)) {
     // run the server
     printf("Running as server\n");
@@ -160,6 +165,8 @@ void Fuzzer::Run(int argc, char **argv) {
   }
 
   printf("Fuzzer version 0.01\n");
+  
+  
 
   samples_pending = 0;
   
@@ -173,6 +180,10 @@ void Fuzzer::Run(int argc, char **argv) {
   ParseOptions(argc, argv);
 
   SetupDirectories();
+
+  log_file_name = this->out_dir + "\\" + string(time_buf) + ".log";
+  printf("Log file: %s\n", log_file_name.c_str());
+  log_file.open(log_file_name);
 
   if(should_restore_state) {
     state = RESTORE_NEEDED;
@@ -196,7 +207,7 @@ void Fuzzer::Run(int argc, char **argv) {
 
   uint64_t last_execs = 0;
   
-  uint32_t secs_to_sleep = 3;
+  uint32_t secs_to_sleep = 5;
   
   uint64_t secs_since_last_save = 0;
 
@@ -221,8 +232,19 @@ void Fuzzer::Run(int argc, char **argv) {
     coverage_mutex.Unlock();
 
     if (num_offsets != num_offsets_before) {
-        num_offsets_before = num_offsets;
         last_new_time = time(NULL);
+        std::tm* ptm = std::localtime(&last_new_time);
+        std::strftime(time_buf, 32, "%Y-%m-%d %H:%M:%S", ptm);
+
+        
+        log_file << "New Offsets: " << num_offsets - num_offsets_before << endl;
+        log_file << "Total Offsets: " << num_offsets << endl;
+        log_file << "Total Crash: " << num_unique_crashes << endl;
+        log_file << "Current Time : " << time_buf << "\n" << endl;
+        log_file.flush();
+        
+
+        num_offsets_before = num_offsets;
     }
     
     printf("\nTotal execs: %lld\nUnique samples: %lld (%lld discarded)\nCrashes: %lld (%lld unique)\nHangs: %lld\nOffsets: %zu\nExecs/s: %lld\n", total_execs, num_samples, num_samples_discarded, num_crashes, num_unique_crashes, num_hangs, num_offsets, (total_execs - last_execs) / secs_to_sleep);
@@ -233,11 +255,16 @@ void Fuzzer::Run(int argc, char **argv) {
     //printf("Start Time      : %s", ctime(&start_time) );
     printf("Continued Time  : %lld hours %lld mins %lld secs\n", secs_since_start / 3600, (secs_since_start % 3600) / 60, (secs_since_start % 60));
     printf("Last New Offs   : %lld hours %lld mins %lld secs\n", secs_since_last_new/3600, (secs_since_last_new%3600)/60 , (secs_since_last_new % 60));
-    
+    if ((secs_since_last_new - secs_since_last_new%100)%1800 == 0 && secs_since_last_new>100) {
+        log_file << "Last New Time : " << secs_since_last_new/3600.0 << " hours ago\n" << endl;
+        log_file.flush();
+    }
     toks++;
     toks = toks % 10;
     last_execs = total_execs;
   }
+
+  log_file.close();
 }
 
 RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Coverage *coverage, uint32_t init_timeout, uint32_t timeout) {
@@ -269,7 +296,7 @@ RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Cov
       }
     }
     if (!delivery_successful) {
-      FATAL("Repeatedly failed to deliver sample");
+       ("Repeatedly failed to deliver sample");
     }
   }
 
