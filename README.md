@@ -119,6 +119,8 @@ The following command line arguments are supported:
 
 `-track_ranges` - Enable the read range tracking feature. More information [here](https://github.com/googleprojectzero/Jackalope/blob/main/README_ranges.md).
 
+`-dry_run` - Makes Jackalope exit after all of the input samples have been processed, but before starting actual fuzzing. Useful for corpus minimization (Note: Jackalope only adds samples containing previously unseen coverage into the output corpus) or reproducing a large number of crashes.
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):
