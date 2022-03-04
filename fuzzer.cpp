@@ -255,7 +255,7 @@ void Fuzzer::Run(int argc, char **argv) {
     //printf("Start Time      : %s", ctime(&start_time) );
     printf("Continued Time  : %lld hours %lld mins %lld secs\n", secs_since_start / 3600, (secs_since_start % 3600) / 60, (secs_since_start % 60));
     printf("Last New Offs   : %lld hours %lld mins %lld secs\n", secs_since_last_new/3600, (secs_since_last_new%3600)/60 , (secs_since_last_new % 60));
-    if ((secs_since_last_new - secs_since_last_new%100)%1800 == 0 && secs_since_last_new>100) {
+    if ((secs_since_last_new - secs_since_last_new%5)%1800 == 0 && secs_since_last_new>100) {
         log_file << "Last New Time : " << secs_since_last_new/3600.0 << " hours ago\n" << endl;
         log_file.flush();
     }
