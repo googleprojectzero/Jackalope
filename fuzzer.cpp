@@ -956,7 +956,13 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
   char *option = GetOption("-delivery", argc, argv);
   if (!option || !strcmp(option, "file")) {
 
-    string outfile = DirJoin(out_dir, string("input_") + std::to_string(tc->thread_id));
+    string extension = "";
+    char *extension_opt = GetOption("-file_extension", argc, argv);
+    if(extension_opt) {
+      extension = string(".") + string(extension_opt);
+    }
+
+    string outfile = DirJoin(out_dir, string("input_") + std::to_string(tc->thread_id) + extension);
     ReplaceTargetCmdArg(tc, "@@", outfile.c_str());
 
     FileSampleDelivery* sampleDelivery = new FileSampleDelivery();
