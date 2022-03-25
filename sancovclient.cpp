@@ -27,8 +27,8 @@ limitations under the License.
 
 #include "sancovclient.h"
 
-#define FUZZ_CHILD_CTRL_IN 100
-#define FUZZ_CHILD_CTRL_OUT 101
+#define FUZZ_CHILD_CTRL_IN 1000
+#define FUZZ_CHILD_CTRL_OUT 1001
 
 #define COV_SHM_SIZE 0x100000
 #define MAX_EDGES ((COV_SHM_SIZE - 4) * 8)

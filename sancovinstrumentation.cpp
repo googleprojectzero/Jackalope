@@ -32,8 +32,8 @@ limitations under the License.
 
 #define ASAN_EXIT_STATUS 42
 
-#define FUZZ_CHILD_CTRL_IN 100
-#define FUZZ_CHILD_CTRL_OUT 101
+#define FUZZ_CHILD_CTRL_IN 1000
+#define FUZZ_CHILD_CTRL_OUT 1001
 
 extern char **environ;
 
