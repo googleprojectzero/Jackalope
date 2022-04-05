@@ -123,6 +123,8 @@ The following command line arguments are supported:
 
 `-dry_run` - Makes Jackalope exit after all of the input samples have been processed, but before starting actual fuzzing. Useful for corpus minimization (Note: Jackalope only adds samples containing previously unseen coverage into the output corpus) or reproducing a large number of crashes.
 
+`-add_all_inputs` - Adds all samples from the input directory into the fuzzing corpus, even those that don't trigger any new coverage. Default is off.
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):

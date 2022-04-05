@@ -111,6 +111,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   dry_run = GetBinaryOption("-dry_run", argc, argv, false);
   
   incremental_coverage = GetBinaryOption("-incremental_coverage", argc, argv, true);
+  
+  add_all_inputs = GetBinaryOption("-add_all_inputs", argc, argv, false);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -331,6 +333,59 @@ RunResult Fuzzer::TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t 
   return result;
 }
 
+void Fuzzer::SaveSample(ThreadContext *tc, Sample *sample, uint32_t init_timeout, uint32_t timeout, Sample *original_sample) {
+  std::vector<Range> ranges;
+  if (track_ranges) {
+    // need to rerun the sample as the minimizer could have changed ranges
+    Coverage tmp_coverage;
+    RunResult result = RunSampleAndGetCoverage(tc, sample, &tmp_coverage, init_timeout, timeout);
+    // this could fail, but the chance is it will be OK
+    // If it fails and no ranges are extracted,
+    // we'll just mutate the entire sample
+    if (result == OK) {
+      tc->range_tracker->ExtractRanges(&ranges);
+    }
+  }
+
+  output_mutex.Lock();
+  char fileindex[20];
+  sprintf(fileindex, "%05lld", num_samples);
+  string filename = string("sample_") + fileindex;
+  string outfile = DirJoin(sample_dir, filename);
+  sample->Save(outfile.c_str());
+  num_samples++;
+  output_mutex.Unlock();
+
+  SampleQueueEntry *new_entry = new SampleQueueEntry();
+  Sample *new_sample = new Sample(*sample);
+  new_entry->sample = new_sample;
+  new_entry->context = tc->mutator->CreateSampleContext(new_entry->sample);
+  if(TrackHotOffsets()) {
+    if (keep_samples_in_memory) {
+      size_t mutation_offset = sample_trie.AddSample(new_sample);
+      tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
+    } else if (original_sample) {
+      size_t mutation_offset = original_sample->FindFirstDiff(*new_sample);
+      tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
+    }
+  }
+  new_entry->priority = 0;
+  new_entry->sample_index = num_samples - 1;
+  new_entry->sample_filename = filename;
+  new_entry->ranges = ranges;
+
+  if (!keep_samples_in_memory) {
+    new_sample->filename = outfile;
+    new_sample->FreeMemory();
+  }
+
+  queue_mutex.Lock();
+  all_samples.push_back(new_sample);
+  all_entries.push_back(new_entry);
+  sample_queue.push(new_entry);
+  queue_mutex.Unlock();
+}
+
 RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout, Sample *original_sample) {
   if (has_new_coverage) {
     *has_new_coverage = 0;
@@ -393,62 +448,13 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
 
     if (trim && minimize_samples) MinimizeSample(tc, sample, &stableCoverage, init_timeout, timeout);
 
-    std::vector<Range> ranges;
-    if (track_ranges) {
-      // need to rerun the sample as the minimizer could have changed ranges
-      Coverage tmp_coverage;
-      result = RunSampleAndGetCoverage(tc, sample, &tmp_coverage, init_timeout, timeout);
-      // this could fail, but the chance is it will be OK
-      // If it fails and no ranges are extracted, 
-      // we'll just mutate the entire sample
-      if (result == OK) {
-        tc->range_tracker->ExtractRanges(&ranges);
-      }
-    }
-
-    output_mutex.Lock();
-    char fileindex[20];
-    sprintf(fileindex, "%05lld", num_samples);
-    string filename = string("sample_") + fileindex;
-    string outfile = DirJoin(sample_dir, filename);
-    sample->Save(outfile.c_str());
-    num_samples++;
-    output_mutex.Unlock();
-
     if (server && report_to_server) {
       server_mutex.Lock();
       server->ReportNewCoverage(&stableCoverage, sample);
       server_mutex.Unlock();
     }
-
-    SampleQueueEntry *new_entry = new SampleQueueEntry();
-    Sample *new_sample = new Sample(*sample);
-    new_entry->sample = new_sample;
-    new_entry->context = tc->mutator->CreateSampleContext(new_entry->sample);
-    if(TrackHotOffsets()) {
-      if (keep_samples_in_memory) {
-        size_t mutation_offset = sample_trie.AddSample(new_sample);
-        tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
-      } else if (original_sample) {
-        size_t mutation_offset = original_sample->FindFirstDiff(*new_sample);
-        tc->mutator->AddHotOffset(new_entry->context, mutation_offset);
-      }
-    }
-    new_entry->priority = 0;
-    new_entry->sample_index = num_samples - 1;
-    new_entry->sample_filename = filename;
-    new_entry->ranges = ranges;
-
-    if (!keep_samples_in_memory) {
-      new_sample->filename = outfile;
-      new_sample->FreeMemory();
-    }
-
-    queue_mutex.Lock();
-    all_samples.push_back(new_sample);
-    all_entries.push_back(new_entry);
-    sample_queue.push(new_entry);
-    queue_mutex.Unlock();
+    
+    SaveSample(tc, sample, init_timeout, timeout, original_sample);
   } 
   
   if (!variableCoverage.empty() && server && report_to_server) {
@@ -755,7 +761,11 @@ void Fuzzer::ProcessSample(ThreadContext* tc, FuzzerJob* job) {
   } else if (result == HANG) {
     WARN("Input sample resulted in a hang");
   } else if (!has_new_coverage) {
-    WARN("Input sample has no new stable coverage");
+    if(add_all_inputs) {
+      SaveSample(tc, job->sample, init_timeout, corpus_timeout, NULL);
+    } else {
+      WARN("Input sample has no new stable coverage");
+    }
   }
 }
 
