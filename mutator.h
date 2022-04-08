@@ -29,6 +29,8 @@ limitations under the License.
 #define DETERMINISTIC_MUTATE_BYTES_NEXT 20
 #define DETERMINISTIC_MUTATE_BYTES_PREVIOUS 3
 
+#define REPEAT_STATS 11
+
 class MutatorSampleContext {
 public:
   virtual ~MutatorSampleContext() {
@@ -47,6 +49,8 @@ public:
   virtual void AddHotOffset(MutatorSampleContext *context, size_t hot_offset) { }
   virtual void SaveContext(MutatorSampleContext *context, FILE *fp) { };
   virtual void LoadContext(MutatorSampleContext *context, FILE *fp) { };
+  virtual void SaveGlobalState(FILE *fp) { };
+  virtual void LoadGlobalState(FILE *fp) { };
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) = 0;
   virtual void NotifyResult(RunResult result, bool has_new_coverage) { }
   virtual bool CanGenerateSample() { return false;  }
@@ -126,6 +130,18 @@ public:
       child_mutators[i]->LoadContext(context->child_contexts[i], fp);
     }
   }
+  
+  virtual void SaveGlobalState(FILE *fp) override {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->SaveGlobalState(fp);
+    }
+  };
+  
+  virtual void LoadGlobalState(FILE *fp) override {
+    for (size_t i = 0; i < child_mutators.size(); i++) {
+      child_mutators[i]->LoadGlobalState(fp);
+    }
+  };
   
   virtual bool CanGenerateSample() override {
     for (size_t i = 0; i < child_mutators.size(); i++) {
@@ -344,20 +360,50 @@ public:
   RepeatMutator(Mutator *mutator, double repeat_p) {
     AddMutator(mutator);
     this->repeat_p = repeat_p;
+    if(repeat_p <= 0) adaptible = true;
   }
 
   virtual bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override {
+    if(adaptible) {
+      repeat_p = adapted_repeat_p;
+    }
+    
     // run the mutator at least once
+    last_num_repeats = 1;
     bool ret = child_mutators[0]->Mutate(inout_sample, prng, all_samples);
     if (!ret) return false;
     while (prng->RandReal() < repeat_p) {
+      last_num_repeats++;
       child_mutators[0]->Mutate(inout_sample, prng, all_samples);
     }
     return true;
   }
 
+  void UpdateStats();
+
+  virtual void NotifyResult(RunResult result, bool has_new_coverage) override {
+    if(adaptible && has_new_coverage) {
+      UpdateStats();
+    }
+    HierarchicalMutator::NotifyResult(result, has_new_coverage);
+  }
+  
+  virtual void SaveGlobalState(FILE *fp) override;
+  
+  virtual void LoadGlobalState(FILE *fp) override;
+  
 public:
   double repeat_p;
+  bool adaptible;
+  size_t last_num_repeats;
+  
+  // for adapting repeat probability
+  static Mutex stats_mutex;
+  static uint64_t stats[REPEAT_STATS];
+  static uint64_t nstats;
+  static uint64_t next_stat;
+  static uint64_t median_num_repeats;
+  static float adapted_repeat_p;
 };
 
 class ByteFlipMutator : public Mutator {

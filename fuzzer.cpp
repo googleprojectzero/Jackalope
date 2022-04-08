@@ -150,7 +150,7 @@ void Fuzzer::Run(int argc, char **argv) {
     return;
   }
 
-  printf("Fuzzer version 0.01\n");
+  printf("Fuzzer version 1.00\n");
 
   samples_pending = 0;
   
@@ -817,6 +817,8 @@ void Fuzzer::SaveState(ThreadContext *tc) {
 
   WriteCoverageBinary(fuzzer_coverage, fp);
   
+  tc->mutator->SaveGlobalState(fp);
+  
   uint64_t num_entries = all_entries.size();
   fwrite(&num_entries, sizeof(num_entries), 1, fp);
   for(SampleQueueEntry *entry : all_entries) {
@@ -852,6 +854,8 @@ void Fuzzer::RestoreState(ThreadContext *tc) {
   fread(&total_execs, sizeof(total_execs), 1, fp);
  
   ReadCoverageBinary(fuzzer_coverage, fp);
+  
+  tc->mutator->LoadGlobalState(fp);
 
   uint64_t num_entries;
   fread(&num_entries, sizeof(num_entries), 1, fp);

@@ -78,7 +78,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
 
   // potentially repeat the mutation
   // (do two or more mutations in a single cycle
-  RepeatMutator *repeater = new RepeatMutator(pselect_or_range, 0.5);
+  // 0 indicates that actual mutation rate will be adapted
+  RepeatMutator *repeater = new RepeatMutator(pselect_or_range, 0);
 
   if(!use_deterministic_mutations && !deterministic_only) {
     
