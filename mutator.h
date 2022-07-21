@@ -483,7 +483,15 @@ public:
 
   bool Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) override;
 
+  void AddValue(char* data, size_t size) {
+    AddInterestingValue(data, size, interesting_values);
+  }
+
+  void AddDictionary(char* path);
+
 protected:
+  void DictUnescape(std::string &in, std::string &out);
+
   std::vector<Sample> interesting_values;
 };
 

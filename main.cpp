@@ -43,6 +43,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
 
   int nrounds = GetIntOption("-iterations_per_round", argc, argv, 1000);
 
+  char* dictionary = GetOption("-dict", argc, argv);
+
   // a pretty simple mutation strategy
 
   PSelectMutator *pselect = new PSelectMutator();
@@ -57,7 +59,10 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   pselect->AddMutator(new BlockFlipMutator(16, 64), 0.1);
   pselect->AddMutator(new BlockFlipMutator(1, 64, true), 0.1);
   pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.1);
-  pselect->AddMutator(new InterestingValueMutator(true), 0.1);
+
+  InterestingValueMutator *iv_mutator = new InterestingValueMutator(true);
+  if (dictionary) iv_mutator->AddDictionary(dictionary);
+  pselect->AddMutator(iv_mutator, 0.1);
 
   // SpliceMutator is not compatible with -keep_samples_in_memory=0
   // as it requires other samples in memory besides the one being
