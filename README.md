@@ -125,6 +125,8 @@ The following command line arguments are supported:
 
 `-add_all_inputs` - Adds all samples from the input directory into the fuzzing corpus, even those that don't trigger any new coverage. Default is off.
 
+`-dict <path>` - Provides a dictionary to be used during mutation. The dictionary should be a text file with every entry on a separate line. `\xXX` escape sequences can be used.
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):
