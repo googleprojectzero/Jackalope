@@ -17,6 +17,7 @@ limitations under the License.
 #include "common.h"
 #include "fuzzer.h"
 #include "mutator.h"
+#include "mersenne.h"
 #include "mutators/grammar/grammar.h"
 #include "mutators/grammar/grammarmutator.h"
 #include "mutators/grammar/grammarminimizer.h"
@@ -165,11 +166,31 @@ bool GrammarFuzzer::IsReturnValueInteresting(uint64_t return_value) {
   return (return_value == 0);
 }
 
+void TestGrammar(char* grammar_path) {
+  Grammar grammar;
+  grammar.Read(grammar_path);
+  PRNG* prng = new MTPRNG();
+  Grammar::TreeNode *tree = grammar.GenerateTree("root", prng);
+  if (!tree) {
+    printf("Grammar failed to generate sample\n");
+  } else {
+    std::string out;
+    grammar.ToString(tree, out);
+    printf("Generated sample:\n%s\n", out.c_str());
+  }
+}
+
 int main(int argc, char **argv)
 {
   Fuzzer* fuzzer;
 
-  char* grammar = GetOption("-grammar", argc, argv);
+  char* grammar = GetOption("-test_grammar", argc, argv);
+  if (grammar) {
+    TestGrammar(grammar);
+    return 0;
+  }
+
+  grammar = GetOption("-grammar", argc, argv);
   if (grammar) {
     fuzzer = new GrammarFuzzer(grammar);
   } else {

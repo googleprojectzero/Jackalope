@@ -763,7 +763,7 @@ void Fuzzer::ProcessSample(ThreadContext* tc, FuzzerJob* job) {
   } else if (!has_new_coverage) {
     if(add_all_inputs) {
       SaveSample(tc, job->sample, init_timeout, corpus_timeout, NULL);
-    } else {
+    } else if(state != GENERATING_SAMPLES) {
       WARN("Input sample has no new stable coverage");
     }
   }

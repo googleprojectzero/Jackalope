@@ -249,24 +249,49 @@ void Grammar::AnalyzeGrammar() {
   }
 }
 
-int Grammar::AddRulePart(Grammar::Rule *rule, Grammar::NodeType type, std::string &value) {
+int Grammar::RulePart::SetAttributes(std::unordered_map<std::string, std::string>& attributes) {
+  this->attributes = attributes;
+  
+  // process common attributes
+  auto iter = attributes.find("id");
+  if (iter != attributes.end()) {
+    int id_attr = atoi(iter->second.c_str());
+    if (id_attr > 0) {
+      id = id_attr;
+    } else {
+      printf("id attribute must be an integer > 0\n");
+      return 0;
+    }
+  } else {
+    id = 0;
+  }
+
+  return 1;
+}
+
+int Grammar::AddRulePart(Grammar::Rule *rule, Grammar::NodeType type, std::string &value,
+  std::unordered_map<std::string, std::string>& attributes)
+{
   RulePart newpart;
   if (type == SYMBOLTYPE) {
     // see if we can convert it to a string
     auto iter = constants.find(value);
     if (iter != constants.end()) {
-      return AddRulePart(rule, STRINGTYPE, iter->second);
+      return AddRulePart(rule, STRINGTYPE, iter->second, attributes);
     } else if (value.find("0x") == 0) {
       string decoded;
       if (!HexStringToString(value, decoded)) return 0;
-      return AddRulePart(rule, STRINGTYPE, decoded);
+      return AddRulePart(rule, STRINGTYPE, decoded, attributes);
     } else {
       // ok, actually a symbol
       newpart.type = SYMBOLTYPE;
       newpart.value = value;
       newpart.symbol = GetOrCreateSymbol(value);
       newpart.symbol->used = true;
+      if (!newpart.SetAttributes(attributes)) return 0;
       rule->parts.push_back(newpart);
+      // clear attributes once set
+      attributes.clear();
     }
   } else {
     // check if we can merge this with the previous string
@@ -324,6 +349,9 @@ int Grammar::ParseGrammarLine(string &line, int lineno) {
   ParseState state = LINESTART;
   const char *symbolstart = NULL;
   string symbolname;
+  string attrname;
+  string attrvalue;
+  std::unordered_map<std::string, std::string> attributes;
   int ret = 1;
   while (1) {
     switch (state) {
@@ -422,11 +450,94 @@ int Grammar::ParseGrammarLine(string &line, int lineno) {
     case SYMBOL:
     {
       switch (*str) {
+      case 0x20:
+      case 0x09:
+        state = SYMBOLSPACE;
+        symbolname.assign(symbolstart, str - symbolstart);
+        if (symbolname.empty()) ret = 0;
+        break;
       case '>':
         state = SYMBOLEND;
         symbolname.assign(symbolstart, str - symbolstart);
         if (symbolname.empty()) ret = 0;
-        if (!AddRulePart(&newrule, SYMBOLTYPE, symbolname)) ret = 0;
+        if (!AddRulePart(&newrule, SYMBOLTYPE, symbolname, attributes)) ret = 0;
+        break;
+      case 0:
+        ret = 0;
+        break;
+      default:
+        break;
+      }
+    }
+    break;
+
+    case SYMBOLSPACE:
+    {
+      switch (*str) {
+      case 0x20:
+      case 0x09:
+        break;
+      case '>':
+        state = SYMBOLEND;
+        if (!AddRulePart(&newrule, SYMBOLTYPE, symbolname, attributes)) ret = 0;
+        break;
+      case 0:
+        ret = 0;
+        break;
+      default:
+        symbolstart = str;
+        state = ATTRNAME;
+        break;
+      }
+    }
+    break;
+
+    case ATTRNAME:
+    {
+      switch (*str) {
+      case 0x20:
+      case 0x09:
+        attrname.assign(symbolstart, str - symbolstart);
+        if (attrname.empty()) ret = 0;
+        attributes[attrname] = "";
+        state = SYMBOLSPACE;
+        break;
+      case '=':
+        attrname.assign(symbolstart, str - symbolstart);
+        if (attrname.empty()) ret = 0;
+        symbolstart = str + 1;
+        state = ATTRVALUE;
+        break;
+      case '>':
+        attrname.assign(symbolstart, str - symbolstart);
+        if (attrname.empty()) ret = 0;
+        attributes[attrname] = "";
+        if (!AddRulePart(&newrule, SYMBOLTYPE, symbolname, attributes)) ret = 0;
+        state = SYMBOLEND;
+        break;
+      case 0:
+        ret = 0;
+        break;
+      default:
+        break;
+      }
+    }
+    break;
+
+    case ATTRVALUE:
+    {
+      switch (*str) {
+      case 0x20:
+      case 0x09:
+        attrvalue.assign(symbolstart, str - symbolstart);
+        attributes[attrname] = attrvalue;
+        state = SYMBOLSPACE;
+        break;
+      case '>':
+        attrvalue.assign(symbolstart, str - symbolstart);
+        attributes[attrname] = attrvalue;
+        if (!AddRulePart(&newrule, SYMBOLTYPE, symbolname, attributes)) ret = 0;
+        state = SYMBOLEND;
         break;
       case 0:
         ret = 0;
@@ -459,13 +570,13 @@ int Grammar::ParseGrammarLine(string &line, int lineno) {
       switch (*str) {
       case '<':
         symbolname.assign(symbolstart, str - symbolstart);
-        if (!AddRulePart(&newrule, STRINGTYPE, symbolname)) ret = 0;
+        if (!AddRulePart(&newrule, STRINGTYPE, symbolname, attributes)) ret = 0;
         state = SYMBOL;
         symbolstart = str + 1;
         break;
       case 0:
         symbolname.assign(symbolstart, str - symbolstart);
-        if (!AddRulePart(&newrule, STRINGTYPE, symbolname)) ret = 0;
+        if (!AddRulePart(&newrule, STRINGTYPE, symbolname, attributes)) ret = 0;
         break;
       default:
         break;
@@ -528,9 +639,29 @@ Grammar::TreeNode *Grammar::GenerateTree(Symbol *symbol, PRNG *prng, int depth) 
   size_t num_generators = symbol->generators.size();
   Rule &generator = symbol->generators[prng->Rand() % num_generators];
 
-  for (auto iter = generator.parts.begin(); iter != generator.parts.end(); iter++) {
-    if (iter->type == SYMBOLTYPE) {
-      TreeNode* child = GenerateTree(iter->symbol, prng, depth + 1);
+  RulePart *part;
+  for(size_t part_index = 0; part_index < generator.parts.size(); part_index++) {
+    part = &(generator.parts[part_index]);
+
+    if (part->type == SYMBOLTYPE) {
+
+      if (part->id) {
+        bool found = false;
+        size_t found_index = 0;
+        for (size_t i = 0; i < part_index; i++) {
+          if (generator.parts[i].id == part->id) {
+            found = true;
+            found_index = i;
+          }
+        }
+        if (found) {
+          TreeNode* child = new TreeNode(*node->children[found_index]);
+          node->children.push_back(child);
+          continue;
+        }
+      }
+
+      TreeNode* child = GenerateTree(part->symbol, prng, depth + 1);
       if (!child) {
         node->Clear();
         delete node;
@@ -538,7 +669,7 @@ Grammar::TreeNode *Grammar::GenerateTree(Symbol *symbol, PRNG *prng, int depth) 
       }
       node->children.push_back(child);
     } else {
-      node->children.push_back(GenerateStringNode(&iter->value));
+      node->children.push_back(GenerateStringNode(&part->value));
     }
   }
   return node;
