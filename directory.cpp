@@ -65,14 +65,15 @@ size_t GetFilesInDirectory(std::string directory, std::list<std::string> &list)
   int n;
 
   n = scandir(directory.c_str(), &listing, NULL, alphasort);
-  
+
   for(int i = 0; i < n; i++) {
     if (strcmp(listing[i]->d_name, ".") == 0) continue;
     if (strcmp(listing[i]->d_name, "..") == 0) continue;
-    
+    if (strcmp(listing[i]->d_name, ".DS_Store") == 0) continue;
+
     list.push_back(DirJoin(directory, listing[i]->d_name));
   }
-  
+
   return list.size();
 }
 
