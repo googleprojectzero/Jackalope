@@ -253,7 +253,7 @@ RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Cov
   if (result == CRASH) {
     string crash_desc = tc->instrumentation->GetCrashName();
 
-    if (TryReproduceCrash(tc, sample, init_timeout, timeout) == CRASH) {
+    if (crash_reproduce_retries > 0 && TryReproduceCrash(tc, sample, init_timeout, timeout) == CRASH) {
       // get a hopefully better name
       crash_desc = tc->instrumentation->GetCrashName();
     } else {
