@@ -252,12 +252,14 @@ RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Cov
   // save crashes and hangs immediately when they are detected
   if (result == CRASH) {
     string crash_desc = tc->instrumentation->GetCrashName();
-
-    if (TryReproduceCrash(tc, sample, init_timeout, timeout) == CRASH) {
-      // get a hopefully better name
-      crash_desc = tc->instrumentation->GetCrashName();
-    } else {
-      crash_desc = "flaky_" + crash_desc;
+    
+    if (crash_reproduce_retries > 0) {
+        if (TryReproduceCrash(tc, sample, init_timeout, timeout) == CRASH) {
+            // get a hopefully better name
+            crash_desc = tc->instrumentation->GetCrashName();
+        } else {
+            crash_desc = "flaky_" + crash_desc;
+        }
     }
     
     bool should_save_crash = false;
