@@ -19,6 +19,18 @@ limitations under the License.
 #include "common.h"
 #include "mutator.h"
 
+#include "ctype.h"
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+
+Mutex RepeatMutator::stats_mutex;
+uint64_t RepeatMutator::stats[REPEAT_STATS];
+uint64_t RepeatMutator::nstats = 0;
+uint64_t RepeatMutator::next_stat = 0;
+uint64_t RepeatMutator::median_num_repeats = 2;
+float RepeatMutator::adapted_repeat_p = 0.75;
+
 int Mutator::GetRandBlock(size_t samplesize, size_t minblocksize, size_t maxblocksize, size_t *blockstart, size_t *blocksize, PRNG *prng) {
   if (samplesize == 0) return 0;
   if (samplesize < minblocksize) return 0;
@@ -222,6 +234,73 @@ template<typename T> void Mutator::AddDefaultInterestingValues(std::vector<Sampl
   }
 }
 
+void InterestingValueMutator::DictUnescape(std::string &in, std::string &out) {
+  const char* in_buf = in.data();
+  char* out_buf = (char*)malloc(in.size());
+  size_t in_pos = 0, out_pos = 0;
+  size_t in_size = in.size();
+
+  char convert_buf[3];
+  convert_buf[2] = 0;
+
+  if (in_size < 4) {
+    out = in;
+    return;
+  }
+
+  while (in_pos < (in_size - 3)) {
+    if((in_buf[in_pos] == '\\') && (in_buf[in_pos + 1] == 'x') &&
+       isxdigit(in_buf[in_pos + 2]) && isxdigit(in_buf[in_pos + 3]))
+    {
+      convert_buf[0] = in_buf[in_pos + 2];
+      convert_buf[1] = in_buf[in_pos + 3];
+      out_buf[out_pos] = (char)strtol(convert_buf, NULL, 16);
+      in_pos += 4;
+      out_pos++;
+    } else {
+      out_buf[out_pos] = in_buf[in_pos];
+      out_pos++;
+      in_pos++;
+    }
+  }
+
+  while (in_pos < in_size) {
+    out_buf[out_pos] = in_buf[in_pos];
+    out_pos++;
+    in_pos++;
+  }
+
+  out.assign(out_buf, out_pos);
+  free(out_buf);
+}
+
+void InterestingValueMutator::AddDictionary(char* path) {
+  std::fstream f;
+  f.open(path, std::ios::in);
+  if (!f.is_open()) {
+    FATAL("Error reading %s", path);
+  }
+
+  size_t values_added = 0;
+
+  std::string line;
+  std::string escapepattern = "\\x";
+  while (getline(f, line)) {
+    if (line.empty()) continue;
+    if (line.find(escapepattern) == std::string::npos) {
+      AddValue(line.data(), line.size());
+    } else {
+      std::string unescaped;
+      DictUnescape(line, unescaped);
+      AddValue(unescaped.data(), unescaped.size());
+    }
+    values_added++;
+  }
+
+  f.close();
+
+  printf("Added %zu values from dictionary\n", values_added);
+}
 
 bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample *> &all_samples) {
   if(all_samples.empty()) return true;
@@ -459,3 +538,57 @@ bool RangeMutator::Mutate(Sample* inout_sample, PRNG* prng, std::vector<Sample*>
   return true;
 }
 
+void RepeatMutator::UpdateStats() {
+  stats_mutex.Lock();
+  
+  stats[next_stat] = last_num_repeats;
+  next_stat = (next_stat + 1) % REPEAT_STATS;
+  
+  if(nstats >= REPEAT_STATS) {
+    std::vector<size_t> sort_array;
+    sort_array.assign(&(stats[0]), &(stats[REPEAT_STATS]));
+    std::sort(sort_array.begin(), sort_array.end());
+    median_num_repeats = sort_array[REPEAT_STATS/2];
+    
+    float new_adapted_repeat_p = 1.0f - 1.0f/median_num_repeats;
+    if(new_adapted_repeat_p < 0.5) new_adapted_repeat_p = 0.5;
+    
+    if(new_adapted_repeat_p != adapted_repeat_p) {
+      adapted_repeat_p = new_adapted_repeat_p;
+      printf("Adjusting mutation repeat probability to %g\n", adapted_repeat_p);
+    }
+    
+  } else {
+    nstats++;
+  }
+  
+  stats_mutex.Unlock();
+}
+
+void RepeatMutator::SaveGlobalState(FILE *fp) {
+  stats_mutex.Lock();
+  
+  fwrite(stats, sizeof(stats), 1, fp);
+  fwrite(&nstats, sizeof(nstats), 1, fp);
+  fwrite(&next_stat, sizeof(next_stat), 1, fp);
+  fwrite(&median_num_repeats, sizeof(median_num_repeats), 1, fp);
+  fwrite(&adapted_repeat_p, sizeof(adapted_repeat_p), 1, fp);
+
+  stats_mutex.Unlock();
+
+  HierarchicalMutator::SaveGlobalState(fp);
+}
+
+void RepeatMutator::LoadGlobalState(FILE *fp) {
+  stats_mutex.Lock();
+
+  fread(stats, sizeof(stats), 1, fp);
+  fread(&nstats, sizeof(nstats), 1, fp);
+  fread(&next_stat, sizeof(next_stat), 1, fp);
+  fread(&median_num_repeats, sizeof(median_num_repeats), 1, fp);
+  fread(&adapted_repeat_p, sizeof(adapted_repeat_p), 1, fp);
+
+  stats_mutex.Unlock();
+
+  HierarchicalMutator::LoadGlobalState(fp);
+}

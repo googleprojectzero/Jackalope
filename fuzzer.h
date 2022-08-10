@@ -177,6 +177,7 @@ protected:
   
   bool MagicOutputFilter(Sample *original_sample, Sample *output_sample, const char *magic, size_t magic_size);
 
+  void SaveSample(ThreadContext *tc, Sample *sample, uint32_t init_timeout, uint32_t timeout, Sample *original_sample);
   RunResult RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout, Sample *original_sample);
   RunResult RunSampleAndGetCoverage(ThreadContext* tc, Sample* sample, Coverage* coverage, uint32_t init_timeout, uint32_t timeout);
   RunResult TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t init_timeout, uint32_t timeout);
@@ -252,6 +253,8 @@ protected:
   bool dry_run;
   
   bool incremental_coverage;
+  
+  bool add_all_inputs;
   
   Mutex crash_mutex;
   std::unordered_map<std::string, int> unique_crashes;

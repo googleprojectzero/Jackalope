@@ -93,6 +93,8 @@ The following command line arguments are supported:
 
 `-delivery <file|shmem>` - Sample delivery mechanism to use. If `file`, each sample is output as file and "@@" in the target arguments is replaced with a path to the file. If `shmem`, the fuzzer creates shared memory instead and replaces "@@" in the target arguments with the name of the shared memory. It is the target's responsibility to open the shared memory and extract the sample in this case. Default is `file`.
 
+`-file_extension` - When using `file` sample delivery, appends the specified extension to the filename. Useful if the target expects input files to have a certain extension. 
+
 `-restore` or `-resume` - Restores and resumes a previous fuzzing session. Both fuzzer and server process support restoring.
 
 `-server` - Specifies the coverage server to use.
@@ -120,6 +122,10 @@ The following command line arguments are supported:
 `-track_ranges` - Enable the read range tracking feature. More information [here](https://github.com/googleprojectzero/Jackalope/blob/main/README_ranges.md).
 
 `-dry_run` - Makes Jackalope exit after all of the input samples have been processed, but before starting actual fuzzing. Useful for corpus minimization (Note: Jackalope only adds samples containing previously unseen coverage into the output corpus) or reproducing a large number of crashes.
+
+`-add_all_inputs` - Adds all samples from the input directory into the fuzzing corpus, even those that don't trigger any new coverage. Default is off.
+
+`-dict <path>` - Provides a dictionary to be used during mutation. The dictionary should be a text file with every entry on a separate line. `\xXX` escape sequences can be used.
 
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 

@@ -53,7 +53,10 @@ protected:
     EQUALSPACE,
     SYMBOL,
     SYMBOLEND,
-    STRING
+    STRING,
+    SYMBOLSPACE,
+    ATTRNAME,
+    ATTRVALUE
   };
 
 public:
@@ -72,6 +75,10 @@ public:
     NodeType type;
     std::string value;
     Symbol* symbol;
+    int id;
+    std::unordered_map<std::string, std::string> attributes;
+
+    int SetAttributes(std::unordered_map<std::string, std::string> &attributes);
   };
 
   class Rule {
@@ -147,7 +154,8 @@ protected:
 
   Symbol* GetOrCreateSymbol(std::string& name);
 
-  int AddRulePart(Rule* rule, NodeType type, std::string& value);
+  int AddRulePart(Rule* rule, NodeType type, std::string& value,
+    std::unordered_map<std::string, std::string> &attributes);
   int HexStringToString(std::string& hex, std::string& out);
 
   void EncodeTree(TreeNode* tree, BinaryRW* rw);

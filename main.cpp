@@ -17,6 +17,7 @@ limitations under the License.
 #include "common.h"
 #include "fuzzer.h"
 #include "mutator.h"
+#include "mersenne.h"
 #include "mutators/grammar/grammar.h"
 #include "mutators/grammar/grammarmutator.h"
 #include "mutators/grammar/grammarminimizer.h"
@@ -43,6 +44,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
 
   int nrounds = GetIntOption("-iterations_per_round", argc, argv, 1000);
 
+  char* dictionary = GetOption("-dict", argc, argv);
+
   // a pretty simple mutation strategy
 
   PSelectMutator *pselect = new PSelectMutator();
@@ -57,7 +60,10 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   pselect->AddMutator(new BlockFlipMutator(16, 64), 0.1);
   pselect->AddMutator(new BlockFlipMutator(1, 64, true), 0.1);
   pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.1);
-  pselect->AddMutator(new InterestingValueMutator(true), 0.1);
+
+  InterestingValueMutator *iv_mutator = new InterestingValueMutator(true);
+  if (dictionary) iv_mutator->AddDictionary(dictionary);
+  pselect->AddMutator(iv_mutator, 0.1);
 
   // SpliceMutator is not compatible with -keep_samples_in_memory=0
   // as it requires other samples in memory besides the one being
@@ -78,7 +84,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
 
   // potentially repeat the mutation
   // (do two or more mutations in a single cycle
-  RepeatMutator *repeater = new RepeatMutator(pselect_or_range, 0.5);
+  // 0 indicates that actual mutation rate will be adapted
+  RepeatMutator *repeater = new RepeatMutator(pselect_or_range, 0);
 
   if(!use_deterministic_mutations && !deterministic_only) {
     
@@ -159,11 +166,31 @@ bool GrammarFuzzer::IsReturnValueInteresting(uint64_t return_value) {
   return (return_value == 0);
 }
 
+void TestGrammar(char* grammar_path) {
+  Grammar grammar;
+  grammar.Read(grammar_path);
+  PRNG* prng = new MTPRNG();
+  Grammar::TreeNode *tree = grammar.GenerateTree("root", prng);
+  if (!tree) {
+    printf("Grammar failed to generate sample\n");
+  } else {
+    std::string out;
+    grammar.ToString(tree, out);
+    printf("Generated sample:\n%s\n", out.c_str());
+  }
+}
+
 int main(int argc, char **argv)
 {
   Fuzzer* fuzzer;
 
-  char* grammar = GetOption("-grammar", argc, argv);
+  char* grammar = GetOption("-test_grammar", argc, argv);
+  if (grammar) {
+    TestGrammar(grammar);
+    return 0;
+  }
+
+  grammar = GetOption("-grammar", argc, argv);
   if (grammar) {
     fuzzer = new GrammarFuzzer(grammar);
   } else {
