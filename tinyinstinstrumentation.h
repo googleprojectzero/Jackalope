@@ -33,6 +33,9 @@ public:
   RunResult Run(int argc, char** argv, uint32_t init_timeout, uint32_t timeout) override;
   RunResult RunWithCrashAnalysis(int argc, char** argv, uint32_t init_timeout, uint32_t timeout) override;
 
+  RunResult TinyInstInstrumentation::Attach(char * script, char * process_name, uint32_t init_timeout, uint32_t timeout) override;
+  RunResult TinyInstInstrumentation::AttachWithCrashAnalysis(char * script, char * process_name, uint32_t init_timeout, uint32_t timeout) override;
+  
   void CleanTarget() override;
 
   bool HasNewCoverage() override;
@@ -47,6 +50,7 @@ public:
 protected:
   LiteCov * instrumentation;
   bool persist;
+  int processID;
   int num_iterations;
   int cur_iteration;
 };

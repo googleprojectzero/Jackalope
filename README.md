@@ -127,6 +127,8 @@ The following command line arguments are supported:
 
 `-dict <path>` - Provides a dictionary to be used during mutation. The dictionary should be a text file with every entry on a separate line. `\xXX` escape sequences can be used.
 
+`-process-name <name of running process> - Enables fuzzing for processes that are already running in the operating system such as Windows services. The fuzzer will attach to the specified running process and get coverage from there. Then, the script specified after `--` will be opened in a new thread and will send the current testcase to running process. Note: this mode only allows for one thread and file delivery through the script. 
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):
