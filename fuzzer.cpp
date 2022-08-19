@@ -113,6 +113,16 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   incremental_coverage = GetBinaryOption("-incremental_coverage", argc, argv, true);
   
   add_all_inputs = GetBinaryOption("-add_all_inputs", argc, argv, false);
+
+  process_name = GetOption("-process_name", argc, argv);
+
+  attach_mode = false;
+  
+  if (process_name != NULL) {
+    attach_mode = true;
+    //set threads to one as multiple threads attaching to one process does not work well
+    num_threads = 1;
+  }
 }
 
 void Fuzzer::SetupDirectories() {
@@ -245,8 +255,14 @@ RunResult Fuzzer::RunSampleAndGetCoverage(ThreadContext *tc, Sample *sample, Cov
       FATAL("Repeatedly failed to deliver sample");
     }
   }
+  RunResult result;
+  if (attach_mode) {
+     script = ArgvToCmd(tc->target_argc, tc->target_argv);
+     result = tc->instrumentation->Attach(script, process_name, init_timeout, timeout);
+  } else {
+     result = tc->instrumentation->Run(tc->target_argc, tc->target_argv, init_timeout, timeout);
+  }
 
-  RunResult result = tc->instrumentation->Run(tc->target_argc, tc->target_argv, init_timeout, timeout);
   tc->instrumentation->GetCoverage(*coverage, true);
 
   // save crashes and hangs immediately when they are detected
@@ -325,8 +341,12 @@ RunResult Fuzzer::TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t 
         FATAL("Repeatedly failed to deliver sample");
       }
     }
-
-    result = tc->instrumentation->RunWithCrashAnalysis(tc->target_argc, tc->target_argv, init_timeout, timeout);
+    if (attach_mode) {
+      script = ArgvToCmd(tc->target_argc, tc->target_argv);
+      result = tc->instrumentation->AttachWithCrashAnalysis(script, process_name, init_timeout, timeout);
+    } else {
+      result = tc->instrumentation->RunWithCrashAnalysis(tc->target_argc, tc->target_argv, init_timeout, timeout);
+    }
     tc->instrumentation->ClearCoverage();
 
     if (result == CRASH) return result;
@@ -409,8 +429,8 @@ RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_cove
     if(new_thread_coverage.empty()) return result;
   }
   
-  // printf("found new coverage: \n");
-  // PrintCoverage(initialCoverage);
+  //printf("found new coverage: \n");
+  //PrintCoverage(initialCoverage);
 
   // the sample returned new coverage
 
