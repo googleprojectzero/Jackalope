@@ -55,6 +55,13 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   option = GetOption("-out", argc, argv);
   if (!option) PrintUsage();
   this->out_dir = option;
+  
+  option = GetOption("-delivery_dir", argc, argv);
+  if (!option) {
+    delivery_dir = out_dir;
+  } else {
+    delivery_dir = option;
+  }
 
   num_threads = GetIntOption("-nthreads", argc, argv, 1);
 
@@ -978,7 +985,7 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
       extension = string(".") + string(extension_opt);
     }
 
-    string outfile = DirJoin(out_dir, string("input_") + std::to_string(tc->thread_id) + extension);
+    string outfile = DirJoin(delivery_dir, string("input_") + std::to_string(tc->thread_id) + extension);
     ReplaceTargetCmdArg(tc, "@@", outfile.c_str());
 
     FileSampleDelivery* sampleDelivery = new FileSampleDelivery();

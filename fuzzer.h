@@ -202,6 +202,7 @@ protected:
 
   std::string in_dir;
   std::string out_dir;
+  std::string delivery_dir;
   std::string sample_dir;
   std::string crash_dir;
   std::string hangs_dir;
