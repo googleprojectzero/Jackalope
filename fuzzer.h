@@ -199,6 +199,7 @@ protected:
   
   void SaveState(ThreadContext *tc);
   void RestoreState(ThreadContext *tc);
+  void DumpCoverage();
 
   std::string in_dir;
   std::string out_dir;
@@ -251,6 +252,8 @@ protected:
   bool incremental_coverage;
   
   bool add_all_inputs;
+  
+  bool dump_coverage;
   
   Mutex crash_mutex;
   std::unordered_map<std::string, int> unique_crashes;

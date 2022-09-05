@@ -120,6 +120,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   incremental_coverage = GetBinaryOption("-incremental_coverage", argc, argv, true);
   
   add_all_inputs = GetBinaryOption("-add_all_inputs", argc, argv, false);
+  
+  dump_coverage = GetBinaryOption("-dump_coverage", argc, argv, false);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -807,6 +809,11 @@ void Fuzzer::RunFuzzerThread(ThreadContext *tc) {
   }
 }
 
+void Fuzzer::DumpCoverage() {
+  std::string out_file = DirJoin(out_dir, "coverage.txt");
+  WriteCoverage(fuzzer_coverage, out_file.c_str());
+}
+
 void Fuzzer::SaveState(ThreadContext *tc) {
   // don't save during input sample processing
   if(state == INPUT_SAMPLE_PROCESSING) return;
@@ -843,6 +850,8 @@ void Fuzzer::SaveState(ThreadContext *tc) {
   fwrite(&sentry, sizeof(sentry), 1, fp);
 
   fclose(fp);
+  
+  if(dump_coverage) DumpCoverage();
 
   coverage_mutex.Unlock();
   output_mutex.Unlock();
