@@ -197,8 +197,6 @@ protected:
   uint64_t num_threads;
   uint64_t total_execs;
 
-  bool attach_mode;
-  char * script;
   char * process_name;
   
   void SaveState(ThreadContext *tc);

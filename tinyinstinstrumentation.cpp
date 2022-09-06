@@ -28,6 +28,13 @@ void TinyInstInstrumentation::Init(int argc, char **argv) {
 
   persist = GetBinaryOption("-persist", argc, argv, false);
   num_iterations = GetIntOption("-iterations", argc, argv, 1);
+  process_name = GetOption("-process_name", argc, argv);
+  script = ArgvToCmd(argc, argv);
+
+  attach_mode = false;
+  if(process_name != NULL) {
+    attach_mode = true;
+  }
 }
 
 RunResult TinyInstInstrumentation::Run(int argc, char **argv, uint32_t init_timeout, uint32_t timeout) {
@@ -67,7 +74,17 @@ RunResult TinyInstInstrumentation::Run(int argc, char **argv, uint32_t init_time
       WARN("Target function not reached, retrying with a clean process\n");
       instrumentation->Kill();
       cur_iteration = 0;
-      status = instrumentation->Run(argc, argv, init_timeout);
+      if (attach_mode) {
+        Sleep(init_timeout);
+        processID = FindProcessId(process_name);
+        if (script != NULL) {
+          HANDLE thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)system, script, 0, NULL);
+          CloseHandle(thread_handle);
+        }
+        status = instrumentation->Attach(processID, timeout1);
+      } else {
+        status = instrumentation->Run(argc, argv, init_timeout);
+      }
     }
 
     if (status != DEBUGGER_TARGET_START) {
@@ -130,117 +147,6 @@ RunResult TinyInstInstrumentation::RunWithCrashAnalysis(int argc, char** argv, u
   // disable instrumentation when reproducing crashes
   instrumentation->DisableInstrumentation();
   RunResult ret = Run(argc, argv, init_timeout, timeout);
-  instrumentation->Kill();
-  instrumentation->EnableInstrumentation();
-  return ret;
-}
-
-RunResult TinyInstInstrumentation::Attach(char * script, char * process_name, uint32_t init_timeout, uint32_t timeout) {
-  DebuggerStatus status;
-  RunResult ret = OTHER_ERROR;
-
-  if (instrumentation->IsTargetFunctionDefined()) {
-    if (cur_iteration == num_iterations) {
-      instrumentation->Kill();
-      cur_iteration = 0;
-    }
-  }
-  
-  // else clear only when the target function is reached
-  if (!instrumentation->IsTargetFunctionDefined()) {
-    instrumentation->ClearCoverage();
-  }
-
-  uint32_t timeout1 = timeout;
-  if (instrumentation->IsTargetFunctionDefined()) {
-    timeout1 = init_timeout;
-  }
-
-  if (instrumentation->IsTargetAlive() && persist) {
-    status = instrumentation->Continue(timeout1);
-  } else {
-    instrumentation->Kill();
-    cur_iteration = 0;
-    instrumentation->script = script;
-    Sleep(init_timeout);
-    processID = FindProcessId(process_name);
-    status = instrumentation->Attach(processID, timeout1);
-  }
-
-  // if target function is defined,
-  // we should wait until it is hit
-  if (instrumentation->IsTargetFunctionDefined()) {
-    if (status != DEBUGGER_TARGET_START) {
-      // try again with a clean process
-      WARN("Target function not reached, retrying with a clean process\n");
-      instrumentation->Kill();
-      cur_iteration = 0;
-      instrumentation->script = script;
-      Sleep(init_timeout);
-      processID = FindProcessId(process_name);
-      status = instrumentation->Attach(processID, timeout1);
-    }
-
-    if (status != DEBUGGER_TARGET_START) {
-      switch (status) {
-      case DEBUGGER_CRASHED:
-        FATAL("Process crashed before reaching the target method\n");
-        break;
-      case DEBUGGER_HANGED:
-        FATAL("Process hanged before reaching the target method\n");
-        break;
-      case DEBUGGER_PROCESS_EXIT:
-        FATAL("Process exited before reaching the target method\n");
-        break;
-      default:
-        FATAL("An unknown problem occured before reaching the target method\n");
-        break;
-      }
-    }
-
-    instrumentation->ClearCoverage();
-
-    status = instrumentation->Continue(timeout);
-  }
-
-  switch (status) {
-  case DEBUGGER_CRASHED:
-    ret = CRASH;
-    instrumentation->Kill();
-    break;
-  case DEBUGGER_HANGED:
-    ret = HANG;
-    instrumentation->Kill();
-    break;
-  case DEBUGGER_PROCESS_EXIT:
-    ret = OK;
-    if (instrumentation->IsTargetFunctionDefined()) {
-      WARN("Process exit during target function\n");
-      ret = HANG;
-    }
-    break;
-  case DEBUGGER_TARGET_END:
-    if (instrumentation->IsTargetFunctionDefined()) {
-      ret = OK;
-      cur_iteration++;
-    } else {
-      FATAL("Unexpected status received from the debugger\n");
-    }
-    break;
-  default:
-    FATAL("Unexpected status received from the debugger\n");
-    break;
-  }
-
-  return ret;
-}
-
-RunResult TinyInstInstrumentation::AttachWithCrashAnalysis(char * script, char * process_name, uint32_t init_timeout, uint32_t timeout) {
-  // clean process when reproducing crashes
-  instrumentation->Kill();
-  // disable instrumentation when reproducing crashes
-  instrumentation->DisableInstrumentation();
-  RunResult ret = Attach(script, process_name, init_timeout, timeout);
   instrumentation->Kill();
   instrumentation->EnableInstrumentation();
   return ret;
