@@ -127,6 +127,8 @@ The following command line arguments are supported:
 
 `-dict <path>` - Provides a dictionary to be used during mutation. The dictionary should be a text file with every entry on a separate line. `\xXX` escape sequences can be used.
 
+`-dump_coverage` - Periodically export coverage (as `coverage.txt` in the output directory) in a format suitable for importing into [Lighthouse](https://github.com/gaasedelen/lighthouse)
+
 For TinyInst instrumentation command line arguments, refer to [TinyInst readme](https://github.com/googleprojectzero/TinyInst).
 
 Example (macOS):
