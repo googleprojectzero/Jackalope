@@ -181,9 +181,12 @@ void Fuzzer::Run(int argc, char **argv) {
 
   SetupDirectories();
 
-  log_file_name = this->out_dir + "\\" + string(time_buf) + ".log";
+  //log_file_name = this->out_dir + "\\" + string(time_buf) + ".log";
+  log_file_name = this->out_dir + "\\" + "fuzzing.log";
   printf("Log file: %s\n", log_file_name.c_str());
-  log_file.open(log_file_name);
+  log_file.open(log_file_name,ios::out|ios::app);
+  log_file << "New Run Time : " << time_buf << "\n" << endl;
+  log_file.flush();
 
   if(should_restore_state) {
     state = RESTORE_NEEDED;
