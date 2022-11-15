@@ -92,6 +92,9 @@ int setup_shmem(const char *name)
 
 #endif
 
+// used to force a crash
+char *crash = NULL;
+
 // ensure we can find the target
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
@@ -127,7 +130,6 @@ void FUZZ_TARGET_MODIFIERS fuzz(char *name) {
     fclose(fp);
   }
   
-  char *crash = NULL;
   if(sample_size >= 4) {
     // check if the sample spells "test"
     if(*(uint32_t *)(sample_bytes) == 0x74736574) {
