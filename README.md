@@ -25,9 +25,9 @@ Jackalope is a customizable, distributed, coverage-guided fuzzer that is able to
 While there are a lot of good coverage-guided fuzzers that work on targets where source code is available, there are relatively few that work on black box binaries, in particular on Windows and macOS operating systems, and those that do exist are mainly based on codebases that aren't very easy to customize. The initial goals of Jackalope are:
  - Easy to customize for targets where generic fuzzers might not work well. This might include
    - Custom mutators
-   - Custom sample delivery mechanizms
+   - Custom sample delivery mechanisms
    - Custom instrumentation, etc.
- - Easy to paralellize, both on a single machine and across multiple machines
+ - Easy to parallelize, both on a single machine and across multiple machines
 
 ### What does it do?
 
@@ -48,7 +48,7 @@ Jackalope does not currently include advanced mutation strategies. Instead it sh
 
 Currently, fuzzing of black-box binaries is supported on Windows and macOS.
 
-Jackalope is also able to run on Linux with Sanitizer Coverage (source code of the targer required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
+Jackalope is also able to run on Linux with Sanitizer Coverage (source code of the target required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
 
 ## Building Jackalope
 
@@ -69,7 +69,7 @@ cmake <generator arguments> ..
 cmake --build . --config Release
 ```
 
-The generator arguments depend on your environmaent. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`.
+The generator arguments depend on your environment. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`.
 
 Getting `No CMAKE_C_COMPILER could be found` error on macOS? Try updating cmake. Also make sure Xcode is installed and you ran it at least once (it installs some components on 1st run).
 
@@ -113,9 +113,9 @@ The following command line arguments are supported:
 
 `-deterministic_mutations` - Use deterministic in addition to nondeterninistic mutations. Defaults to true unless the `-server` flag is used.
 
-`-deterministic_only` - Prioritize deterministic mutations. Note: even with this flag, the fuzzer is still going to use nondeterministic mutations, but only after all deterministic mutations have been exhausted. It might be useful when running with a `-server` to have a single clinent instance perform deterministic mutations.
+`-deterministic_only` - Prioritize deterministic mutations. Note: even with this flag, the fuzzer is still going to use nondeterministic mutations, but only after all deterministic mutations have been exhausted. It might be useful when running with a `-server` to have a single client instance perform deterministic mutations.
 
-`-max_sample_size` - The maximum sample size to use. All input samples larger than `max_sample_size` get trimmed and mutators can't produce new samples which exceed that sie. Defaults to 1000000. Warning: When using shared memory sample delivery, `max_sample_size` must match the maximum sample size expected by the target, e.g. like in the test target [here](https://github.com/googleprojectzero/Jackalope/blob/3301a9ac6c6f1483f2d565d372015302e85e6ae2/test.cpp#L33).
+`-max_sample_size` - The maximum sample size to use. All input samples larger than `max_sample_size` get trimmed and mutators can't produce new samples which exceed that size. Defaults to 1000000. Warning: When using shared memory sample delivery, `max_sample_size` must match the maximum sample size expected by the target, e.g. like in the test target [here](https://github.com/googleprojectzero/Jackalope/blob/3301a9ac6c6f1483f2d565d372015302e85e6ae2/test.cpp#L33).
 
 `-keep_samples_in_memory` - Whether to always keep all samples in memory. Defaults to true. Recommended unless the corpus is too large to fit in memory.
 
@@ -149,7 +149,7 @@ Explanation: This runs the fuzzer using "in" as input directory and "out" as out
 
 Jackalope consists of the following main classes:
 
-`Fuzzer` - The 'main' class that handles most of the high-level tasks such as keeping track of corpus and coverage, scheduling jobs to threads, communicating with the server (if present). The Fuzzer class exposes several virtual methods that can be used to modify it's behavior. Users can create custom fuzzers by subclassinng the `Fuzzer` class and overloading these methods.
+`Fuzzer` - The 'main' class that handles most of the high-level tasks such as keeping track of corpus and coverage, scheduling jobs to threads, communicating with the server (if present). The Fuzzer class exposes several virtual methods that can be used to modify it's behavior. Users can create custom fuzzers by subclassing the `Fuzzer` class and overloading these methods.
 
 `Sample` - A simple class for storing sample data (bytes).
 
@@ -161,7 +161,7 @@ Jackalope consists of the following main classes:
 
 `PRNG` - Pseudorandom number generator. By defauly, Jackalope uses PRNG based on Mersenne twister.
 
-`Server` - Implements server components of the fuzzr. The server is responsible for collecting coverage from clients as well as samples that trigger new coverage. The server then distributes those samples to other fuzzer processes.
+`Server` - Implements server components of the fuzzer. The server is responsible for collecting coverage from clients as well as samples that trigger new coverage. The server then distributes those samples to other fuzzer processes.
 
 `Client` - Implements methods for communicating with the server.
 
@@ -193,7 +193,7 @@ Q: I am getting errors/crashes/hangs when running under instrumentation that I'm
 
 A: These can often be resolved by adding the following flags:
  - If you are getting errors or slowdowns related to custom exceptions or C++ exception processing, these can be resolved in most cases by adding `-generate_unwind` flag. In case this does not work, there is a more aggressive `-patch_return_addresses` flag, however note that it has a significant performance impact. You can read more about these flags [here](https://github.com/googleprojectzero/TinyInst#return-address-patching).  On Windows, another alternative to `-generate_unwind`/`-patch_return_addresses` is to fuzz a 32-bit build of your target.
- - Try adding `-stack_offset 0x1000` or another value. This will resolve instrumentation issues with target writing on address lower than the stack pointer (this behavior was obeserved on macOS with leaf functions in some modules).
+ - Try adding `-stack_offset 0x1000` or another value. This will resolve instrumentation issues with target writing on address lower than the stack pointer (this behavior was observed on macOS with leaf functions in some modules).
 
 Q: Getting coverage is nice, but can I also have memory sanitization?
 
