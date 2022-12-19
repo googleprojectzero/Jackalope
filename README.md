@@ -61,6 +61,7 @@ Prerequisite: Python 3
 3. Run the following commands:
 
 ```
+cd Jackalope
 git clone --recurse-submodules git@github.com:googleprojectzero/TinyInst.git
 (alternately: git clone --recurse-submodules https://github.com/googleprojectzero/TinyInst.git)
 mkdir build
