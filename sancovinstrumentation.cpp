@@ -29,6 +29,7 @@ limitations under the License.
 #include "common.h"
 #include "coverage.h"
 #include "sancovinstrumentation.h"
+#include "directory.h"
 
 #define ASAN_EXIT_STATUS 42
 
@@ -59,6 +60,12 @@ SanCovInstrumentation::~SanCovInstrumentation() {
 }
 
 void SanCovInstrumentation::Init(int argc, char **argv) {
+  // create directory for ASAN reports
+  std::string out_dir = GetOption("-out", argc, argv);
+  std::string asan_report_dir = DirJoin(out_dir, "ASAN");
+  CreateDirectory(asan_report_dir);
+  asan_report_file = DirJoin(asan_report_dir, "log");
+
   // compute shm names
   sample_shm_name = std::string("/shm_fuzz_") + std::to_string(getpid()) + "_" + std::to_string(thread_id);
   coverage_shm_name = std::string("/shm_fuzz_coverage_") + std::to_string(getpid()) + "_" + std::to_string(thread_id);
@@ -67,7 +74,7 @@ void SanCovInstrumentation::Init(int argc, char **argv) {
   std::list<std::string> additional_env;
   additional_env.push_back(std::string("SAMPLE_SHM_ID=") + sample_shm_name);
   additional_env.push_back(std::string("COV_SHM_ID=") + coverage_shm_name);
-  additional_env.push_back(std::string("ASAN_OPTIONS=exitcode=") + std::to_string(ASAN_EXIT_STATUS));
+  additional_env.push_back(std::string("ASAN_OPTIONS=exitcode=") + std::to_string(ASAN_EXIT_STATUS) + ":log_path=" + asan_report_file);
   ComputeEnvp(additional_env);
   
   // set up shmem for coverage
@@ -79,6 +86,7 @@ void SanCovInstrumentation::Init(int argc, char **argv) {
   num_iterations = GetIntOption("-iterations", argc, argv, 1);
   
   mute_child = GetBinaryOption("-mute_child", argc, argv, false);
+  
 }
 
 void SanCovInstrumentation::SetUpShmem() {
@@ -277,32 +285,33 @@ RunResult SanCovInstrumentation::Run(int argc, char **argv, uint32_t init_timeou
     size_t retries = (timeout * 10);
     int success = 0;
     int status;
+    int crashpid = pid;
     for(size_t i = 0; i < retries; i++) {
        success = waitpid(pid, &status, WNOHANG) == pid;
        if(success) break;
        usleep(100);
     }
     if(!success) {
-      crash_description = std::string("unexpected_error");
+      crash_description = std::string("unexpected_error_") + GetTimeStr();
       Kill();
       return CRASH;
     }
     CleanupChild();
     if(WIFSIGNALED(status)) {
       int signal = WTERMSIG(status);
-      crash_description = std::string("signal_") + std::to_string(signal);
+      crash_description = std::string("signal_") + std::to_string(signal) + std::string("_") + GetTimeStr();
       return CRASH;
     } else if (WIFEXITED(status) && (WEXITSTATUS(status) == ASAN_EXIT_STATUS)) {
-      crash_description = std::string("ASAN");
+      crash_description = GetAsanCrashDesc(crashpid);
       return CRASH;
     }
-    crash_description = std::string("unexpected_exit");
+    crash_description = std::string("unexpected_exit_") + GetTimeStr();
     return CRASH;
   } else if (poll_result == HANG) {
     Kill();
     return HANG;
   } else {
-    crash_description = std::string("unexpected_error");
+    crash_description = std::string("unexpected_error_") + GetTimeStr();
     Kill();
     return CRASH;
   }
@@ -313,12 +322,17 @@ void SanCovInstrumentation::CleanTarget() {
 }
 
 std::string SanCovInstrumentation::GetCrashName() {
+  return crash_description;
+}
+
+std::string SanCovInstrumentation::GetTimeStr() {
   uint64_t time;
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   time = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-  return crash_description + std::string("_") + std::to_string(time);
+  return std::to_string(time);
 }
+
 
 void SanCovInstrumentation::GetCoverage(Coverage &coverage, bool clear_coverage) {
   std::set<uint64_t> new_offsets;
@@ -373,5 +387,41 @@ void SanCovInstrumentation::IgnoreCoverage(Coverage &coverage) {
     clear_edge(virgin_bits, *iter);
   }
 }
+
+std::string SanCovInstrumentation::GetAsanCrashDesc(int crashpid) {
+  // very basic parsing of ASAN crash report
+  std::string filename = asan_report_file + "." + std::to_string(crashpid);
+  FILE *fp = fopen(filename.c_str(), "rb");
+  if(!fp) {
+    WARN("Error opening ASAN report at %s", filename.c_str());
+    return std::string("ASAN_") + GetTimeStr();
+  }
+  fseek(fp, 0, SEEK_END);
+  size_t size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  char *buf = (char *)malloc(size + 1);
+  fread(buf, 1, size, fp);
+  buf[size] = 0;
+  fclose(fp);
+  
+  unlink(filename.c_str());
+  
+  char *pc = strstr(buf, "pc 0x");
+  if(!pc) {
+    free(buf);
+    return std::string("ASAN_") + GetTimeStr();
+  }
+
+  char *hex = pc + 3;
+  char *hexend = hex + 2;
+  while(isalnum(*hexend)) hexend++;
+  *hexend = 0;
+
+  unsigned long addres = strtoul(hex, NULL, 16);
+
+  free(buf);  
+  return std::string("ASAN_") + AnonymizeAddress((void *)addres);
+}
+
 
 

@@ -64,7 +64,7 @@ void __sanitizer_cov_reset_edgeguards() {
 }
 
 extern char **environ;
-
+bool fuzzer = false;
 
 extern "C" void __sanitizer_cov_trace_pc_guard_init(uint32_t *start, uint32_t *stop) {
     // Avoid duplicate initialization
@@ -85,6 +85,7 @@ extern "C" void __sanitizer_cov_trace_pc_guard_init(uint32_t *start, uint32_t *s
         puts("[COV] no shared memory bitmap available, skipping");
         cov_shmem = (struct cov_shmem_data*) malloc(COV_SHM_SIZE);
     } else {
+        fuzzer = true;
         int fd = shm_open(shm_key, O_RDWR, S_IREAD | S_IWRITE);
         if (fd <= -1) {
             fprintf(stderr, "Failed to open shared memory region: %s\n", strerror(errno));
@@ -119,6 +120,7 @@ extern "C" void __sanitizer_cov_trace_pc_guard(uint32_t *guard) {
 
 void __pre_fuzz() {
   // printf("__pre_fuzz\n");
+  if(!fuzzer) return;
   __sanitizer_cov_reset_edgeguards();
   int ret;
   char status;
@@ -131,6 +133,10 @@ void __pre_fuzz() {
 
 void __post_fuzz(uint64_t return_value) {
   // printf("__post_fuzz\n");
+  if(!fuzzer) {
+    printf("Done\n");
+    exit(0);
+  }
   int ret;
   char status;
   status = 'd';

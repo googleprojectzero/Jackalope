@@ -66,9 +66,14 @@ protected:
   
   RunResult GetStatus(uint32_t timeout, int expected_status);
   
+  std::string GetAsanCrashDesc(int crashpid);
+  
+  std::string GetTimeStr();
+  
   uint64_t return_value;
   std::string crash_description; 
-  
+  std::string asan_report_file;
+
   int pid;
   int thread_id;
   
