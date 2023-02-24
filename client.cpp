@@ -148,7 +148,7 @@ int CoverageClient::ReportCrash(Sample *crash, std::string &crash_desc) {
 
 int CoverageClient::ReportNewCoverage(Coverage *new_coverage, Sample *new_sample) {
   ConnectToServer('S');
-  
+
   SendCoverage(sock, *new_coverage);
 
   char reply;
@@ -206,18 +206,6 @@ int CoverageClient::GetUpdates(std::list<Sample *> &new_samples, uint64_t total_
         return 0;
       }
 
-      if (!keep_samples_in_memory) {
-        char fileindex[20];
-        sprintf(fileindex, "%05lld", num_samples);
-        string filename = string("sample_") + fileindex;
-        string outfile = DirJoin(sample_dir, filename);
-        sample->filename = outfile;
-        sample->Save();
-        sample->FreeMemory();
-
-        num_samples++;
-      }
-
       new_samples.push_back(sample);
     } else {
       DisconnectFromServer();
@@ -234,12 +222,9 @@ int CoverageClient::GetUpdates(std::list<Sample *> &new_samples, uint64_t total_
 void CoverageClient::SaveState(FILE* fp) {
   fwrite(&last_timestamp, sizeof(last_timestamp), 1, fp);
   fwrite(&client_id, sizeof(last_timestamp), 1, fp);
-  fwrite(&num_samples, sizeof(last_timestamp), 1, fp);
 }
 
 void CoverageClient::LoadState(FILE* fp) {
   fread(&last_timestamp, sizeof(last_timestamp), 1, fp);
   fread(&client_id, sizeof(last_timestamp), 1, fp);
-  fread(&num_samples, sizeof(last_timestamp), 1, fp);
 }
-

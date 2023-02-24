@@ -24,8 +24,8 @@ limitations under the License.
 
 class CoverageClient : public ServerCommon {
 public:
-  CoverageClient() : last_timestamp(0), num_samples(0),
-    have_server(false), server_port(DEFAULT_SERVER_PORT)
+  CoverageClient() : last_timestamp(0), have_server(false),
+    server_port(DEFAULT_SERVER_PORT)
   {
     PRNG::SecureRandom(&client_id, sizeof(client_id));
   }
@@ -47,7 +47,6 @@ private:
 
   uint64_t last_timestamp;
   uint64_t client_id;
-  uint64_t num_samples;
 
   std::string server_ip;
   uint16_t server_port;
