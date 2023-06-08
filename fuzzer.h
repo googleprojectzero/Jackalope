@@ -31,9 +31,9 @@ limitations under the License.
 
 #ifdef linux
 #include "sancovinstrumentation.h"
-#else
-#include "tinyinstinstrumentation.h"
 #endif
+
+#include "tinyinstinstrumentation.h"
 
 class PRNG;
 class Mutator;

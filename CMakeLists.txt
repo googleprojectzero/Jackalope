@@ -27,9 +27,7 @@ if(UNIX AND NOT APPLE)
   set(LINUX TRUE)
 endif()
 
-if(NOT LINUX)
-  add_subdirectory(TinyInst)
-endif()
+add_subdirectory(TinyInst)
 
 project("fuzzer")
 
@@ -43,8 +41,6 @@ if(LINUX)
   )
 else()
   set(platform_specific_sources
-    tinyinstinstrumentation.h
-    tinyinstinstrumentation.cpp
   )
 endif()
 
@@ -57,6 +53,8 @@ add_library(fuzzerlib STATIC
   fuzzer.h
   instrumentation.cpp
   instrumentation.h
+  tinyinstinstrumentation.h
+  tinyinstinstrumentation.cpp
   mutator.cpp
   mutator.h
   minimizer.cpp
@@ -95,17 +93,6 @@ if(LINUX)
   target_link_libraries(fuzzerlib pthread)
 endif()
 
-# In case of Linux, compile a minimum TinyInst
-# with only multiplatform essentials.
-if(LINUX) 
-  add_library(tinyinst STATIC
-    TinyInst/common.h
-    TinyInst/common.cpp
-    TinyInst/coverage.h
-    TinyInst/coverage.cpp
-    )
-endif()
-
 add_dependencies(fuzzerlib tinyinst)
 target_link_libraries(fuzzerlib tinyinst)
 
@@ -129,7 +116,7 @@ endif()
 
 if(LINUX)
   if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
-    message(FATAL_ERROR "You need to use Clang to compile the target with Sanitizer Coverage")
+    message(FATAL_ERROR "You need to use Clang to compile TinyInst on Linux")
   endif()
 
   add_executable(sancovtest

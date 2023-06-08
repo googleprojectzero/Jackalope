@@ -25,9 +25,15 @@ limitations under the License.
 std::string Instrumentation::AnonymizeAddress(void* addr) {
   char buf[20];
   sprintf(buf, "%p", addr);
+
+  if(!strcmp(buf, "(nil)")) return std::string("0");
+
+  int addr_start = 0;
+  if(buf[0] == '0' && ((buf[1] == 'x') || (buf[1] == 'X'))) addr_start = 2;
+
   int len = (int)strlen(buf);
   int firstnonzero = len;
-  for (int i = 0; i < len; i++) {
+  for (int i = addr_start; i < len; i++) {
     if (buf[i] != '0') {
       firstnonzero = i;
       break;
