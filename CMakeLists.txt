@@ -15,19 +15,27 @@
 cmake_minimum_required(VERSION "3.1")
 set (CMAKE_CXX_STANDARD 17)
 
+add_subdirectory(TinyInst)
+
 # Determine whether TinyInst should be build for arm64 or x86
-if(APPLE AND NOT DEFINED ${ARCHITECTURE})
+if (WIN32)
+  # no support for arm64 on Windows
+elseif(ANDROID_ABI)
+  set(ANDROID TRUE)
+  if(${ANDROID_ABI} MATCHES "arm64")
+    set(ARCHITECTURE ${ANDROID_ABI})
+    add_definitions(-DARM64)
+  endif()
+elseif(NOT DEFINED ${ARCHITECTURE})
   EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
   if(${ARCHITECTURE} MATCHES arm64)
     add_definitions(-DARM64)
   endif()
 endif()
 
-if(UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE AND NOT ANDROID)
   set(LINUX TRUE)
 endif()
-
-add_subdirectory(TinyInst)
 
 project("fuzzer")
 

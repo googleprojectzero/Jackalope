@@ -69,6 +69,10 @@ int setup_shmem(const char* name) {
 
 int setup_shmem(const char *name)
 {
+#ifdef __ANDROID__
+  printf("Shared memory not supported on Android\n");
+  return 0;
+#else
   int fd;
 
   // get shared memory file descriptor (NOT a file)
@@ -88,6 +92,7 @@ int setup_shmem(const char *name)
   }
 
   return 1;
+#endif
 }
 
 #endif

@@ -52,11 +52,15 @@ SanCovInstrumentation::SanCovInstrumentation(int thread_id) {
 }
 
 SanCovInstrumentation::~SanCovInstrumentation() {
+#ifdef __ANDROID__
+  FATAL("SanCovInstrumentation is not implemented on Android");
+#else
   if(cov_shm) {
     munmap(cov_shm, COVERAGE_SHM_SIZE);
     shm_unlink(coverage_shm_name.c_str());
     close(cov_shm_fd);
   }
+#endif
 }
 
 void SanCovInstrumentation::Init(int argc, char **argv) {
@@ -90,6 +94,9 @@ void SanCovInstrumentation::Init(int argc, char **argv) {
 }
 
 void SanCovInstrumentation::SetUpShmem() {
+#ifdef __ANDROID__
+  FATAL("SanCovInstrumentation is not implemented on Android");
+#else
   int res;
   
   // get shared memory file descriptor (NOT a file)
@@ -114,6 +121,7 @@ void SanCovInstrumentation::SetUpShmem() {
   }
   
   memset(cov_shm, 0, COVERAGE_SHM_SIZE);
+#endif
 }
 
 void SanCovInstrumentation::ComputeEnvp(std::list<std::string> &additional_env) {
@@ -177,7 +185,11 @@ void SanCovInstrumentation::StartTarget(int argc, char** argv) {
     }
 
     // close all other FDs
+#ifdef __ANDROID__
+    int tablesize = sysconf(_SC_OPEN_MAX);
+#else
     int tablesize = getdtablesize();
+#endif
     for (int i = 3; i < tablesize; i++) {
       if (i == FUZZ_CHILD_CTRL_IN || i == FUZZ_CHILD_CTRL_OUT) {
         continue;

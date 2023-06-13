@@ -71,6 +71,9 @@ void SharedMemory::Close() {
 #include <fcntl.h>
 
 void SharedMemory::Open(char* name, size_t size) {
+#ifdef __ANDROID__
+  FATAL("Shared memory is not implemented on Android");
+#else
   int res;
 
   this->size = size;
@@ -98,13 +101,18 @@ void SharedMemory::Open(char* name, size_t size) {
   {
     FATAL("Error creating shared memory");
   }
+#endif
 }
 
 void SharedMemory::Close() {
+#ifdef __ANDROID__
+  FATAL("Shared memory is not implemented on Android");
+#else
   munmap(shm, size);
   shm_unlink(name);
   close(fd);
   free(name);
+#endif
 }
 
 #endif
