@@ -46,9 +46,9 @@ Jackalope does not currently include advanced mutation strategies. Instead it sh
 
 ### Which platforms are supported?
 
-Currently, fuzzing of black-box binaries is supported on Windows and macOS.
+Currently, fuzzing of black-box binaries is supported on Windows, macOS, Linux and Android operating systems.
 
-Jackalope is also able to run on Linux with Sanitizer Coverage (source code of the target required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
+On Linux, Jackalope is also able to run with Sanitizer Coverage (source code of the target required). This mode is documented in a [separate document](https://github.com/googleprojectzero/Jackalope/blob/main/README_sancov.md).
 
 ## Building Jackalope
 
@@ -70,7 +70,7 @@ cmake <generator arguments> ..
 cmake --build . --config Release
 ```
 
-The generator arguments depend on your environment. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`.
+The generator arguments depend on your environment. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`. On Linux, no generator arguments are required. When cross-compiling for Android additional cmake arguments are needed, those are the same as described in [TinyInst build instructions for Android](https://github.com/googleprojectzero/TinyInst/blob/master/Android/README.md).
 
 Getting `No CMAKE_C_COMPILER could be found` error on macOS? Try updating cmake. Also make sure Xcode is installed and you ran it at least once (it installs some components on 1st run).
 
