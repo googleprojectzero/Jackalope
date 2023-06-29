@@ -61,8 +61,13 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   pselect->AddMutator(new BlockFlipMutator(1, 64, true), 0.1);
   pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.1);
 
-  InterestingValueMutator *iv_mutator = new InterestingValueMutator(true);
-  if (dictionary) iv_mutator->AddDictionary(dictionary);
+  InterestingValueMutator *iv_mutator = NULL;
+  if(dictionary) {
+    iv_mutator = new InterestingValueMutator(false);
+    iv_mutator->AddDictionary(dictionary);
+  } else {
+    iv_mutator = new InterestingValueMutator(true);
+  }
   pselect->AddMutator(iv_mutator, 0.1);
 
   // SpliceMutator is not compatible with -keep_samples_in_memory=0
@@ -182,6 +187,7 @@ void TestGrammar(char* grammar_path) {
 
 int main(int argc, char **argv)
 {
+  printf("test\n");
   Fuzzer* fuzzer;
 
   char* grammar = GetOption("-test_grammar", argc, argv);
