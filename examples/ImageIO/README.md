@@ -4,11 +4,11 @@ This directory contains an example harness for fuzzing image parsers on macOS.
 
 Build Jackalope as explained in the main README. To start a fuzzing session, run
 
-`./fuzzer -in in -out out -t 100 -delivery shmem -instrument_module ImageIO -target_module test_imageio -target_method _fuzz -nargs 1 -iterations 1000 -persist -loop -cmp_coverage -generate_unwind -- ../examples/ImageIO/Release/test_imageio -m @@`
+`./fuzzer -in in -out out -t 100 -t1 5000 -delivery shmem -instrument_module ImageIO -target_module test_imageio -target_method _fuzz -nargs 1 -iterations 1000 -persist -loop -cmp_coverage -generate_unwind -- ../examples/ImageIO/Release/test_imageio -m @@`
 
 Explanation of the flags
  - `-in` and `-out` are the input corpus directory and the output directory.
- - `-t` is the timeout in milliseconds.
+ - `-t` is the sample processing timeout in milliseconds, while `-t1` is the initialization timeout. Separating these allows us to give the process plenty of time to reach the desired functionality, but filter out samples that take too long to process.
  - `-delivery shmem` means we are passing a sample to the target over shared memory.
  - `-instrument_module ImageIO` means we will be collecting coverage from the `ImageIO` module. This can be replaced according to the format being fuzzed. More on that later.
  - `-target_module test_imageio -target_method _fuzz -nargs 1 -iterations 1000 -persist -loop` flags configure Jackalope's persistent fuzzing mode. In combination, these flags mean that Jackalope is going to run the function `fuzz` in module `test_imageio` in a loop for every fuzzing iteration without restarting the process. The process is going to be periodically restarted after 1000 iteration (if not sooner due to other events).
