@@ -187,7 +187,6 @@ void TestGrammar(char* grammar_path) {
 
 int main(int argc, char **argv)
 {
-  printf("test\n");
   Fuzzer* fuzzer;
 
   char* grammar = GetOption("-test_grammar", argc, argv);
