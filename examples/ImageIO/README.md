@@ -4,7 +4,7 @@ This directory contains an example harness for fuzzing image parsers on macOS.
 
 Build Jackalope as explained in the main README. To start a fuzzing session, run
 
-`./fuzzer -in in -out out -t 100 -t1 5000 -delivery shmem -instrument_module ImageIO -target_module test_imageio -target_method _fuzz -nargs 1 -iterations 1000 -persist -loop -cmp_coverage -generate_unwind -- ../examples/ImageIO/Release/test_imageio -m @@`
+`./fuzzer -in in -out out -t 200 -t1 5000 -delivery shmem -instrument_module ImageIO -target_module test_imageio -target_method _fuzz -nargs 1 -iterations 1000 -persist -loop -cmp_coverage -generate_unwind -- ../examples/ImageIO/Release/test_imageio -m @@`
 
 Explanation of the flags
  - `-in` and `-out` are the input corpus directory and the output directory.
