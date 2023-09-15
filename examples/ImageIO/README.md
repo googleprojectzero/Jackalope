@@ -28,3 +28,4 @@ which will print the module names when they get loaded.
 Other useful flags:
  - `-nthreads <number>` speeds up your fuzzing session by running on multiple threads in parallel.
  - `-mem_limit <megabytes>`. Sometimes, fuzzing image files produces images with large dimensions that require a lot of memory and cause slowdowns. You can avoid saving those to the fuzzing corpus by setting a memory limit for the target process.
+ - `-target_env DYLD_INSERT_LIBRARIES=/usr/lib/libgmalloc.dylib` to fuzz witg Guard Malloc. Slower, but enables catching memory issues that might not cause a (reliable) crash otherwise.
