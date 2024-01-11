@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2023 Google LLC
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,16 @@ cmake_minimum_required(VERSION "3.1")
 set (CMAKE_CXX_STANDARD 17)
 
 if (APPLE)
-  add_subdirectory(ImageIO)
-  add_subdirectory(VideoToolbox)
+
+  add_executable(vtdecode
+    vtdecode.m
+  )
+
+  target_link_libraries(vtdecode
+    "-framework Foundation"
+    "-framework AVFoundation"
+    "-framework CoreMedia"
+    "-framework CoreVideo"
+  )
+
 endif()
-
-
