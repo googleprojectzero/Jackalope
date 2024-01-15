@@ -133,6 +133,9 @@ void Fuzzer::SetupDirectories() {
   CreateDirectory(hangs_dir);
   sample_dir = DirJoin(out_dir, "samples");
   CreateDirectory(sample_dir);
+  // change for afl: add sync dir
+  fuzzers_sync_dir = DirJoin(sample_dir, "fuzzers_sync");
+  CreateDirectory(fuzzers_sync_dir);
 }
 
 void *StartFuzzThread(void *arg) {
@@ -212,7 +215,7 @@ void Fuzzer::Run(int argc, char **argv) {
     }
     coverage_mutex.Unlock();
     
-    printf("\nTotal execs: %lld\nUnique samples: %lld (%lld discarded)\nCrashes: %lld (%lld unique)\nHangs: %lld\nOffsets: %zu\nExecs/s: %lld\n", total_execs, num_samples, num_samples_discarded, num_crashes, num_unique_crashes, num_hangs, num_offsets, (total_execs - last_execs) / secs_to_sleep);
+    printf("\nState: %d\nTotal execs: %lld\nUnique samples: %lld (%lld discarded)\nCrashes: %lld (%lld unique)\nHangs: %lld\nOffsets: %zu\nExecs/s: %lld\n", state, total_execs, num_samples, num_samples_discarded, num_crashes, num_unique_crashes, num_hangs, num_offsets, (total_execs - last_execs) / secs_to_sleep);
     last_execs = total_execs;
     
     if (state == FUZZING && dry_run) {
@@ -397,6 +400,51 @@ void Fuzzer::SaveSample(ThreadContext *tc, Sample *sample, uint32_t init_timeout
   queue_mutex.Unlock();
 }
 
+void Fuzzer::sync_fuzzers(ThreadContext *tc) {
+  // change for afl: sync samples
+  // this method must in a new function, and called in sync method.
+  // access afl sync dir, add all new file, save the last file id, update all_samples, all_entries, sample_queue.
+
+  // need a global var to save the last id. and change the for loop.
+  std::vector<Range> ranges;
+  std::list<std::string> fuzzers_sync_files;
+  GetFilesInDirectorySync(fuzzers_sync_dir, fuzzers_sync_files, fuzzers_sync_offset);
+
+  if (fuzzers_sync_files.size() == 0) {
+    WARN("fuzzers directory is empty\n");
+    return;
+  } else {
+    SAY("Synchronizing %d input files read\n", (int)fuzzers_sync_files.size());
+  }
+
+  // sync_file is "fuzzers_sync/{file}"
+  for (const auto& sync_file: fuzzers_sync_files) {
+    num_samples++;
+
+    // create a entry for sample.
+    SampleQueueEntry *new_entry = new SampleQueueEntry();
+    Sample *new_sample = new Sample();
+    new_sample->size = 0xdeadbeaf; // or change EnsureLoad.
+    new_entry->sample = new_sample;
+    new_entry->context = tc->mutator->CreateSampleContext(new_entry->sample);
+    new_entry->priority = 0;
+    new_entry->sample_index = num_samples - 1;
+    new_entry->sample_filename = sync_file;
+    new_entry->ranges = ranges;
+
+    string outfile = DirJoin(sample_dir, sync_file);
+    new_sample->filename = outfile;
+    new_sample->FreeMemory();
+
+    SAY("Synchronizing %s\n", outfile.c_str());
+
+    // push entry in queue.
+    all_samples.push_back(new_sample);
+    all_entries.push_back(new_entry);
+    sample_queue.push(new_entry);
+  }
+}
+
 RunResult Fuzzer::RunSample(ThreadContext *tc, Sample *sample, int *has_new_coverage, bool trim, bool report_to_server, uint32_t init_timeout, uint32_t timeout, Sample *original_sample) {
   if (has_new_coverage) {
     *has_new_coverage = 0;
@@ -554,7 +602,6 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
     RestoreState(tc);
     state = INPUT_SAMPLE_PROCESSING;
   }
-  
   // only save state while fuzzing
   if(state == FUZZING) {
     uint64_t cur_time = GetCurTime();
@@ -613,6 +660,9 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
         state = FUZZING;
       }
     }
+  }
+  else {
+    sync_fuzzers(tc);
   }
   
   if (state == SERVER_SAMPLE_PROCESSING) {
@@ -714,6 +764,7 @@ void Fuzzer::FuzzJob(ThreadContext* tc, FuzzerJob* job) {
   if (track_ranges) tc->mutator->SetRanges(&entry->ranges);
 
   printf("Fuzzing sample %05lld\n", entry->sample_index);
+  printf("Fuzzing sample %s\n", entry->sample_filename.c_str());
 
   job->discard_sample = false;
 

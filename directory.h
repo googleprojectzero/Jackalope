@@ -35,6 +35,7 @@ limitations under the License.
 #endif
 
 size_t GetFilesInDirectory(std::string directory, std::list<std::string> &list);
+size_t GetFilesInDirectorySync(std::string directory, std::list<std::string> &list, uint64_t &offset);
 std::string DirJoin(std::string dir1, std::string dir2);
 int CreateDirectory(std::string &directory);
 

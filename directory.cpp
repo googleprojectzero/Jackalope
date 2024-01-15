@@ -17,6 +17,9 @@ limitations under the License.
 #include <string.h>
 #include <string>
 #include <list>
+#include <regex>
+#include <cstdint>
+#include <iostream>
 #include "directory.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
@@ -72,6 +75,44 @@ size_t GetFilesInDirectory(std::string directory, std::list<std::string> &list)
     if (strcmp(listing[i]->d_name, ".DS_Store") == 0) continue;
 
     list.push_back(DirJoin(directory, listing[i]->d_name));
+  }
+
+  return list.size();
+}
+
+// for sync fuzzers file (afl format), return the "fuzzers_sync/{file}".
+size_t GetFilesInDirectorySync(std::string directory, std::list<std::string> &list, uint64_t &offset)
+{
+  struct dirent **listing;
+  int n;
+
+  n = scandir(directory.c_str(), &listing, NULL, alphasort);
+  // std::cout << "Synchronizing : " << directory << "\n";
+
+  for(int i = 0; i < n; i++) {
+    // only find the queue file (afl format)
+    if (strcmp(listing[i]->d_name, ".") == 0) continue;
+    if (strcmp(listing[i]->d_name, "..") == 0) continue;
+    if (strncmp(listing[i]->d_name, "id:", 2)) continue;
+
+    // match id.
+    std::regex id_regex("id:([0-9]+)");
+    std::smatch match;
+    std::string input(listing[i]->d_name);
+    // std::cout << "Synchronizing filename: " << input << "\n";
+    if (std::regex_search(input, match, id_regex) && match.size() > 1) {
+        std::string id_str = match.str(1);
+        uint64_t id = std::stoull(id_str);
+        // std::cout << "Matched sync file ID: " << id << "\n";
+        if (id > offset)
+          offset = id;
+        else
+          continue;
+    } else {
+      continue;
+    }
+
+    list.push_back(DirJoin("fuzzers_sync", listing[i]->d_name));
   }
 
   return list.size();

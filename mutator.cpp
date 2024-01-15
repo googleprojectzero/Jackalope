@@ -314,6 +314,8 @@ bool SpliceMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
 
   if(inout_sample->size == 0) return false;
   if(other_sample->size == 0) return false;
+  if(inout_sample->size == 0xdeadbeaf) return false;
+  if(other_sample->size == 0xdeadbeaf) return false;
 
   if(points == 1) {
     size_t point1, point2;

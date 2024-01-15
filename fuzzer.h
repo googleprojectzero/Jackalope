@@ -188,6 +188,7 @@ protected:
   void JobDone(FuzzerJob* job);
   void FuzzJob(ThreadContext* tc, FuzzerJob* job);
   void ProcessSample(ThreadContext* tc, FuzzerJob* job);
+  void sync_fuzzers(ThreadContext *tc);
 
   uint64_t num_crashes;
   uint64_t num_unique_crashes;
@@ -207,6 +208,11 @@ protected:
   std::string sample_dir;
   std::string crash_dir;
   std::string hangs_dir;
+  // change for afl: add sync dir
+  std::string fuzzers_sync_dir;
+
+  // save others fuzzers id
+  uint64_t fuzzers_sync_offset = 0;
 
   //std::string target_cmd;
   int target_argc;
