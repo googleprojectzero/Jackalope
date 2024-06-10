@@ -331,7 +331,8 @@ RunResult Fuzzer::TryReproduceCrash(ThreadContext* tc, Sample* sample, uint32_t 
       WARN("Error delivering sample, retrying with a clean target");
       tc->instrumentation->CleanTarget();
       if (!tc->sampleDelivery->DeliverSample(sample)) {
-        FATAL("Repeatedly failed to deliver sample");
+        WARN("Repeatedly failed to deliver sample when reproducing a crash, the crashs will be saved as flaky");
+        return HANG;
       }
     }
 
