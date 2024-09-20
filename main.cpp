@@ -59,7 +59,8 @@ Mutator * BinaryFuzzer::CreateMutator(int argc, char **argv, ThreadContext *tc) 
   pselect->AddMutator(new BlockFlipMutator(2, 16), 0.1);
   pselect->AddMutator(new BlockFlipMutator(16, 64), 0.1);
   pselect->AddMutator(new BlockFlipMutator(1, 64, true), 0.1);
-  pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.1);
+  pselect->AddMutator(new BlockDuplicateMutator(1, 128, 1, 8), 0.05);
+  pselect->AddMutator(new BlockDuplicateMutator(1, 16, 1, 64), 0.05);
 
   InterestingValueMutator *iv_mutator = NULL;
   if(dictionary) {
