@@ -72,6 +72,8 @@ public:
 
   class RulePart {
   public:
+    RulePart() : id(0) { }
+
     NodeType type;
     std::string value;
     Symbol* symbol;
