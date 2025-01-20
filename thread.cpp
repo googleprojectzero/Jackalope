@@ -32,6 +32,7 @@ void CreateThread(void *(*start_routine) (void *), void *arg) {
 void CreateThread(void *(*start_routine) (void *), void *arg) {
   pthread_t thread_id;
   pthread_create(&thread_id, NULL, start_routine, arg);
+  pthread_detach(thread_id);
 }
 
 #endif

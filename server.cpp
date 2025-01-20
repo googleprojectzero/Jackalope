@@ -682,7 +682,7 @@ void CoverageServer::RunServer() {
     if (setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout))) {
 #else
     struct timeval tv;
-    tv.tv_sec = 10000; // 10 Secs Timeout 
+    tv.tv_sec = 10; // 10 Secs Timeout 
     tv.tv_usec = 0;
     if (setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval))) {
 #endif
