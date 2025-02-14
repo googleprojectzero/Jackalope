@@ -79,6 +79,13 @@ void SanCovInstrumentation::Init(int argc, char **argv) {
   additional_env.push_back(std::string("SAMPLE_SHM_ID=") + sample_shm_name);
   additional_env.push_back(std::string("COV_SHM_ID=") + coverage_shm_name);
   additional_env.push_back(std::string("ASAN_OPTIONS=exitcode=") + std::to_string(ASAN_EXIT_STATUS) + ":log_path=" + asan_report_file);
+
+  std::list<char *> env_options;
+  GetOptionAll("-target_env", argc, argv, &env_options);
+  for (auto iter = env_options.begin(); iter != env_options.end(); iter++) {
+    additional_env.push_back(std::string(*iter));
+  }
+
   ComputeEnvp(additional_env);
   
   // set up shmem for coverage
@@ -418,10 +425,15 @@ std::string SanCovInstrumentation::GetAsanCrashDesc(int crashpid) {
   
   unlink(filename.c_str());
   
+  std::string reason;
+  if(strstr(buf, "AddressSanitizer: stack-overflow on address")) {
+    reason = "stack-overflow_";
+  }  
+  
   char *pc = strstr(buf, "pc 0x");
   if(!pc) {
     free(buf);
-    return std::string("ASAN_") + GetTimeStr();
+    return std::string("ASAN_") + reason + GetTimeStr();
   }
 
   char *hex = pc + 3;
@@ -432,7 +444,7 @@ std::string SanCovInstrumentation::GetAsanCrashDesc(int crashpid) {
   unsigned long addres = strtoul(hex, NULL, 16);
 
   free(buf);  
-  return std::string("ASAN_") + AnonymizeAddress((void *)addres);
+  return std::string("ASAN_") + reason + AnonymizeAddress((void *)addres);
 }
 
 
