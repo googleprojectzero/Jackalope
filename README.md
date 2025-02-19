@@ -70,7 +70,7 @@ cmake <generator arguments> ..
 cmake --build . --config Release
 ```
 
-The generator arguments depend on your environment. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`. On Linux, no generator arguments are required. When cross-compiling for Android additional cmake arguments are needed, those are the same as described in [TinyInst build instructions for Android](https://github.com/googleprojectzero/TinyInst/blob/master/Android/README.md).
+The generator arguments depend on your environment. On macOS you'd want to use `-G Xcode`, while for example on Windows with Visual Studio 2019 and for 64-bit build you would use `-G "Visual Studio 16 2019" -A x64`. On Linux, no generator arguments are required. When cross-compiling for Android additional cmake arguments are needed, those are the same as described in [TinyInst build instructions for Android](https://github.com/googleprojectzero/TinyInst/blob/master/Android/README.md). If you are fuzzing Android on a VM that supports shared memory via /dev/shm, `-DANDROID_TARGET=VM` enables shared memory sample delivery.
 
 Getting `No CMAKE_C_COMPILER could be found` error on macOS? Try updating cmake. Also make sure Xcode is installed and you ran it at least once (it installs some components on 1st run).
 
