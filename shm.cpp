@@ -117,6 +117,7 @@ void SharedMemory::Close() {
   FATAL("Shared memory is not implemented on Android");
 #else
   munmap(shm, size);
+  unlink(this->name);
 #ifndef ANDROID_VM
   shm_unlink(name);
 #endif
