@@ -71,18 +71,26 @@ void SharedMemory::Close() {
 #include <fcntl.h>
 
 void SharedMemory::Open(char* name, size_t size) {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(ANDROID_VM)
   FATAL("Shared memory is not implemented on Android");
 #else
   int res;
 
   this->size = size;
+
+  // get shared memory file descriptor (NOT a file)
+#ifdef ANDROID_VM
+  size_t name_size = strlen(name) + strlen("/dev/shm");
+  this->name = (char*)malloc(name_size + 1);
+  strcpy(this->name, "/dev/shm");
+  strcat(this->name, name);
+  fd = open(this->name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+#else
   size_t name_size = strlen(name);
   this->name = (char*)malloc(name_size + 1);
   strcpy(this->name, name);
-
-  // get shared memory file descriptor (NOT a file)
   fd = shm_open(name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+#endif
   if (fd == -1)
   {
     FATAL("Error creating shared memory");
@@ -105,11 +113,14 @@ void SharedMemory::Open(char* name, size_t size) {
 }
 
 void SharedMemory::Close() {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(ANDROID_VM)
   FATAL("Shared memory is not implemented on Android");
 #else
   munmap(shm, size);
+  unlink(this->name);
+#ifndef ANDROID_VM
   shm_unlink(name);
+#endif
   close(fd);
   free(name);
 #endif
