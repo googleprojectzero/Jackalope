@@ -16,7 +16,10 @@ public:
 class GrammarMutator : public Mutator {
 public:
   // Mutator interface method
-  GrammarMutator(Grammar* grammar) : grammar(grammar) { }
+  GrammarMutator(Grammar* grammar, double mutation_falloff) : 
+    grammar(grammar), mutation_falloff(mutation_falloff) 
+    { }
+
   bool CanGenerateSample() override { return true; }
   bool GenerateSample(Sample* sample, PRNG* prng) override;
   void InitRound(Sample* input_sample, MutatorSampleContext* context) override;
@@ -72,5 +75,6 @@ protected:
   Mutex interesting_trees_mutex;
 
   Grammar *grammar;
+  double mutation_falloff;
 };
 

@@ -53,7 +53,7 @@ double GrammarMutator::GetMutationCandidates(std::vector<MutationCandidate>& can
 	}
 	for (auto iter = node->children.begin(); iter != node->children.end(); iter++) {
 		if ((*iter)->type == Grammar::STRINGTYPE) continue;
-		GetMutationCandidates(candidates, *iter, filter, depth + 1, maxdepth, p/1.4, just_repeat);
+		GetMutationCandidates(candidates, *iter, filter, depth + 1, maxdepth, p/mutation_falloff, just_repeat);
 	}
 	return p;
 }

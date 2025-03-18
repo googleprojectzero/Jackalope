@@ -20,7 +20,9 @@ public:
 
 class GrammarMinimizer : public Minimizer {
 public:
-  GrammarMinimizer(Grammar* grammar) : grammar(grammar) { }
+  GrammarMinimizer(Grammar* grammar, int minimization_limit) : 
+    grammar(grammar), minimization_limit(minimization_limit) 
+    { }
 
   MinimizerContext* CreateContext(Sample* sample) override;
 
@@ -32,5 +34,6 @@ public:
   void ReportFail(Sample* sample, MinimizerContext* context) override;
 
   Grammar* grammar;
+  int minimization_limit;
 };
 

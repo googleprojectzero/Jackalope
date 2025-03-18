@@ -147,7 +147,11 @@ GrammarFuzzer::GrammarFuzzer(const char* grammar_file) {
 }
 
 Mutator* GrammarFuzzer::CreateMutator(int argc, char** argv, ThreadContext* tc) {
-  GrammarMutator* grammar_mutator = new GrammarMutator(&grammar);
+  double mutation_falloff = 1.1;
+  char *fallof_option = GetOption("-grammar_mutation_falloff", argc, argv);
+  if(fallof_option) mutation_falloff = atof(fallof_option);
+
+  GrammarMutator* grammar_mutator = new GrammarMutator(&grammar, mutation_falloff);
 
   NRoundMutator* mutator = new NRoundMutator(grammar_mutator, 20);
 
@@ -155,7 +159,8 @@ Mutator* GrammarFuzzer::CreateMutator(int argc, char** argv, ThreadContext* tc) 
 }
 
 Minimizer* GrammarFuzzer::CreateMinimizer(int argc, char** argv, ThreadContext* tc) {
-  return new GrammarMinimizer(&grammar);
+  int minimization_limit = GetIntOption("-grammar_minimization_limit", argc, argv, 500);
+  return new GrammarMinimizer(&grammar, 500);
 }
 
 bool GrammarFuzzer::OutputFilter(Sample* original_sample, Sample* output_sample, ThreadContext* tc) {

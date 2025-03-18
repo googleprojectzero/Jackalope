@@ -1,8 +1,6 @@
 #include "common.h"
 #include "grammarminimizer.h"
 
-#define MINIMIZATION_LIMIT 1500
-
 MinimizerContext* GrammarMinimizer::CreateContext(Sample* sample) {
   GrammarMinimizerContext* context = new GrammarMinimizerContext();
 
@@ -39,7 +37,7 @@ void GrammarMinimizer::GetMinimizationCandidates(Grammar::TreeNode* tree, Gramma
 int GrammarMinimizer::MinimizeStep(Sample* sample, MinimizerContext* context) {
   GrammarMinimizerContext* gcontext = (GrammarMinimizerContext*)context;
 
-  if ((gcontext->num_modes_initial - gcontext->num_modes_removed) <= MINIMIZATION_LIMIT) return 0;
+  if ((gcontext->num_modes_initial - gcontext->num_modes_removed) <= minimization_limit) return 0;
 
   Grammar::TreeNode* current_node;
   Grammar::Symbol* current_symbol;
