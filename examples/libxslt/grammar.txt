@@ -1,0 +1,435 @@
+<char> = <0x20>
+<char> = <0x21>
+<char> = &quot;
+<char> = <0x23>
+<char> = <0x24>
+<char> = <0x25>
+<char> = &amp;
+<char> = &apos;
+<char> = <0x28>
+<char> = <0x29>
+<char> = <0x2a>
+<char> = <0x2b>
+<char> = <0x2c>
+<char> = <0x2d>
+<char> = <0x2e>
+<char> = <0x2f>
+<char> = <0x30>
+<char> = <0x31>
+<char> = <0x32>
+<char> = <0x33>
+<char> = <0x34>
+<char> = <0x35>
+<char> = <0x36>
+<char> = <0x37>
+<char> = <0x38>
+<char> = <0x39>
+<char> = <0x3a>
+<char> = <0x3b>
+<char> = &lt;
+<char> = <0x3d>
+<char> = &gt;
+<char> = <0x3f>
+<char> = <0x40>
+<char> = <0x41>
+<char> = <0x42>
+<char> = <0x43>
+<char> = <0x44>
+<char> = <0x45>
+<char> = <0x46>
+<char> = <0x47>
+<char> = <0x48>
+<char> = <0x49>
+<char> = <0x4a>
+<char> = <0x4b>
+<char> = <0x4c>
+<char> = <0x4d>
+<char> = <0x4e>
+<char> = <0x4f>
+<char> = <0x50>
+<char> = <0x51>
+<char> = <0x52>
+<char> = <0x53>
+<char> = <0x54>
+<char> = <0x55>
+<char> = <0x56>
+<char> = <0x57>
+<char> = <0x58>
+<char> = <0x59>
+<char> = <0x5a>
+<char> = <0x5b>
+<char> = <0x5c>
+<char> = <0x5d>
+<char> = <0x5e>
+<char> = <0x5f>
+<char> = <0x60>
+<char> = <0x61>
+<char> = <0x62>
+<char> = <0x63>
+<char> = <0x64>
+<char> = <0x65>
+<char> = <0x66>
+<char> = <0x67>
+<char> = <0x68>
+<char> = <0x69>
+<char> = <0x6a>
+<char> = <0x6b>
+<char> = <0x6c>
+<char> = <0x6d>
+<char> = <0x6e>
+<char> = <0x6f>
+<char> = <0x70>
+<char> = <0x71>
+<char> = <0x72>
+<char> = <0x73>
+<char> = <0x74>
+<char> = <0x75>
+<char> = <0x76>
+<char> = <0x77>
+<char> = <0x78>
+<char> = <0x79>
+<char> = <0x7a>
+<char> = <0x7b>
+<char> = <0x7c>
+<char> = <0x7d>
+<char> = <0x7e>
+<char> = <0x7f>
+
+<str> = 
+<str> = <char><str>
+
+<root> = <xsldocs><delimiter1><srcdocs>
+
+<delimiter1> = <lt>!delimiter1!<gt>
+<delimiter2> = <lt>!delimiter2!<gt>
+
+<xsldocs> = <xsldoc>
+<xsldocs> = <xsldoc><delimiter2><xsldocs>
+
+<srcdocs> = <srcdoc>
+<srcdocs> = <srcdoc><delimiter2><srcdocs>
+
+<srcdoc> = <xmlheader><xmlelement>
+
+<xmlheader> = <lt>?xml version="1.0" encoding="UTF-8"?<gt>
+
+<xsldoc> = <xmlheader><stylesheet>
+<xsldoc> = <xmlheader><faketemplate>
+
+<version> = 1.0
+<version> = 1.1
+
+<faketemplate> = <lt><xsltagname id=2> xsl:version="<version>" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" <xslattributes><gt><xsltrules><lt>/<xsltagname id=2><gt>
+<stylesheet> = <lt>xsl:stylesheet version="<version>" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" <xslattributes><gt><xsltrules><lt>/xsl:stylesheet<gt>
+
+<nsurl> = http://www.w3.org/1999/XSL/Transform
+<nsurl> = http://www.w3.org/url1
+<nsurl> = http://www.w3.org/url2
+<nsurl> = http://www.w3.org/url3
+
+<prefix> = xsl
+<prefix> = ns1
+<prefix> = ns2
+<prefix> = ns3
+
+<nsdeclaration> = xmlns:<prefix>="<nsurl>"
+
+<maybexslprefix> = xsl:
+<maybexslprefix> = xsl:
+<maybexslprefix> = xsl:
+<maybexslprefix> = 
+
+<xslattributes> = 
+<xslattributes> = <xslattribute> <xslattributes>
+
+<xslattribute> = <nsdeclaration>
+<xslattribute> = <excludeprefix>
+<xslattribute> = <extensionprefix>
+<xslattribute> = <selectattr>
+<xslattribute> = <matchattr>
+<xslattribute> = <useattr>
+<xslattribute> = <modeattr>
+<xslattribute> = <nameattr>
+<xslattribute> = <usesetsattr>
+<xslattribute> = <namespaceattr>
+<xslattribute> = <decimalattrs>
+<xslattribute> = <testattr>
+<xslattribute> = <hrefattr>
+<xslattribute> = <terminateattr>
+<xslattribute> = <sprefixattr>
+<xslattribute> = <rprefixattr>
+<xslattribute> = <numberattrs>
+<xslattribute> = <outputattrs>
+<xslattribute> = <sortattrs>
+<xslattribute> = <methodattr>
+<xslattribute> = <versionattr>
+<xslattribute> = <elementsattr>
+<xslattribute> = <idattr>
+<xslattribute> = <priorityattr>
+<xslattribute> = <disableescattr>
+
+<excludeprefix> = <maybexslprefix>exclude-result-prefixes="<excludeprefixlist>"
+<extensionprefix> = <maybexslprefix>extension-element-prefixes="<excludeprefixlist>"
+
+<excludeprefixlist> = <prefix>
+<excludeprefixlist> = #default
+<excludeprefixlist> = <prefix> <excludeprefixlist>
+<excludeprefixlist> = #default <excludeprefixlist>
+
+<selectattr> = select="<xpath>"
+<matchattr> = match="<xpath>"
+<useattr> = use="<xpath>"
+
+<xsltrules> = 
+<xsltrules> = <repeat_xsltrule>
+<xsltrules> = <xmlelements>
+
+<xsltrule> = <lt><xsltagname id=1> <xslattributes><gt><xsltrules><lt>/<xsltagname id=1><gt>
+
+<xsltagname> = xsl:apply-imports
+<xsltagname> = xsl:apply-templates
+<xsltagname> = xsl:attribute-set
+<xsltagname> = xsl:attribute
+<xsltagname> = xsl:call-template
+<xsltagname> = xsl:choose
+<xsltagname> = xsl:comment
+<xsltagname> = xsl:copy-of
+<xsltagname> = xsl:copy
+<xsltagname> = xsl:document
+<xsltagname> = xsl:decimal-format
+<xsltagname> = xsl:element
+<xsltagname> = xsl:fallback
+<xsltagname> = xsl:for-each
+<xsltagname> = xsl:if
+<xsltagname> = xsl:import
+<xsltagname> = xsl:include
+<xsltagname> = xsl:key
+<xsltagname> = xsl:message
+<xsltagname> = xsl:namespace-alias
+<xsltagname> = xsl:number
+<xsltagname> = xsl:otherwise
+<xsltagname> = xsl:output
+<xsltagname> = xsl:param
+<xsltagname> = xsl:preserve-space
+<xsltagname> = xsl:processing-instruction
+<xsltagname> = xsl:sort
+<xsltagname> = xsl:strip-space
+<xsltagname> = xsl:stylesheet
+<xsltagname> = xsl:template
+<xsltagname> = xsl:text
+<xsltagname> = xsl:transform
+<xsltagname> = xsl:value-of
+<xsltagname> = xsl:variable
+<xsltagname> = xsl:when
+<xsltagname> = xsl:with-param
+
+<modeattr> = mode="<modename>"
+<nameattr> = name="<name>"
+<usesetsattr> = use-attribute-sets="<names>"
+<namespaceattr> = namespace="<nsurl>"
+<testattr> = test="<xpath>"
+<hrefattr> = href="<href>"
+<terminateattr> = terminate="<yesno>"
+<sprefixattr> = stylesheet-prefix="<prefix>"
+<rprefixattr> = result-prefix="<prefix>"
+<methodattr> = method="<method>"
+<versionattr> = version="<version>"
+<elementsattr> = elements="<elementlist>"
+<idattr> = id="<name>"
+<priorityattr> = priority="<number>"
+<disableescattr> = disable-output-escaping="<yesno>"
+
+<decimalattrs> = decimal-separator="<char>" grouping-separator="<char>" infinity="<str>" minus-sign="<char>" NaN="<str>" percent="<char>" per-mille="<char>" zero-digit="<char>" digit=<char> pattern-separator="<char>"
+<numberattrs> = count="<xpath>" level="<nlevel>" from="<xpath>" value="<xpath>" format="<str>" letter-value="<lettervalue>" grouping-separator="<char>" grouping-size="<number>"
+<outputattrs> = version="<version>" omit-xml-declaration="<yesno>" standalone="<yesno>" cdata-section-elements="<names>" indent="<yesno>"
+<sortattrs> = order="<order>" case-order="<caseorder>" data-type="<datatype>"
+
+<nlevel> = single
+<nlevel> = multiple
+<nlevel> = any
+
+<order> = ascending
+<order> = descending
+
+<caseorder> = upper-first
+<caseorder> = lower-first
+
+<datatype> = text
+<datatype> = number
+
+<lettervalue> = alphabetic
+<lettervalue> = traditional
+
+<method> = xml
+<method> = html
+<method> = txt
+
+<modename> = mode1
+<modename> = mode2
+
+<name> = name1
+<name> = name2
+<name> = name3
+<name> = name4
+
+<names> = <name>
+<names> = <name> <names>
+
+<href> = template1.xsl
+<href> = template2.xsl
+<href> = template3.xsl
+
+<yesno> = yes
+<yesno> = no
+
+<number> = 0
+<number> = 1
+<number> = 2
+<number> = 3
+
+<elementlist> = <tagname>
+<elementlist> = <tagname> <elementlist>
+
+
+######### regular xml #########
+
+<xmlelements> = 
+<xmlelements> =  
+<xmlelements> = <repeat_xmlelement>
+
+<xmlelement> = <str>
+<xmlelement> = <xsltrule>
+<xmlelement> = <lt><xmltagname id=1> <xmlattributes><gt><xmlelements><lt>/<xmltagname id=1><gt>
+<xmltagname> = <maybeprefix><tagname>
+
+<maybeprefix> = 
+<maybeprefix> = 
+<maybeprefix> = 
+<maybeprefix> = <prefix>:
+
+<xmlattributes> = 
+<xmlattributes> = <xmlattribute> <xmlattributes>
+
+<xmlattribute> = <attrname>="<avt>"
+<xmlattribute> = <attrname>="<avt>"
+<xmlattribute> = <attrname>="<avt>"
+<xmlattribute> = <attrname>="<avt>"
+<xmlattribute> = <nsdeclaration>
+
+<avt> = <avtelement>
+<avt> = <avtelement><avt>
+
+<avtelement> = <str>
+<avtelement> = {<xpath>}
+
+<tagname> = aaa
+<tagname> = bbb
+<tagname> = ccc
+<tagname> = ddd
+<tagname> = eee
+
+<attrname> = att1
+<attrname> = att2
+<attrname> = att3
+<attrname> = att4
+<attrname> = att5
+
+<documenturi> = doc1.xml
+<documenturi> = doc2.xml
+<documenturi> = doc3.xml
+
+######### xpath ########
+
+<xpath> = <xpathelement><otherxpath>
+
+<otherxpath> = 
+<otherxpath> = <xpathelement><otherxpath>
+
+<xpathelement> = <tagname>
+<xpathelement> = <attrname>
+<xpathelement> = <prefix>
+<xpathelement> = <number>
+<xpathelement> = '<str>'
+<xpathelement> = '<name>'
+<xpathelement> = $<name>
+<xpathelement> = /
+<xpathelement> = *
+<xpathelement> = .
+<xpathelement> =  
+<xpathelement> = #
+<xpathelement> = |
+<xpathelement> = @<attrname>
+<xpathelement> = [<xpath>]
+<xpathelement> = <axisspecifier>::
+<xpathelement> = <xpathfn>(<xpathargs>)
+<xpathelement> = document('<documenturi>')
+<xpathelement> = key('<name>',<xpath>)
+<xpathelement> = <xpathop>
+
+<xpathargs> = <xpath>
+<xpathargs> = <xpath>, <xpathargs>
+
+<axisspecifier> = ancestor
+<axisspecifier> = ancestor-or-self
+<axisspecifier> = attribute
+<axisspecifier> = child
+<axisspecifier> = descendant
+<axisspecifier> = descendant-or-self
+<axisspecifier> = following
+<axisspecifier> = following-sibling
+<axisspecifier> = namespace
+<axisspecifier> = parent
+<axisspecifier> = preceding
+<axisspecifier> = preceding-sibling
+<axisspecifier> = self
+
+<xpathfn> = boolean
+<xpathfn> = ceiling
+<xpathfn> = choose
+<xpathfn> = concat
+<xpathfn> = contains
+<xpathfn> = count
+<xpathfn> = current
+<xpathfn> = element-available
+<xpathfn> = false
+<xpathfn> = floor
+<xpathfn> = format-number
+<xpathfn> = function-available
+<xpathfn> = generate-id
+<xpathfn> = id
+<xpathfn> = key
+<xpathfn> = lang
+<xpathfn> = last
+<xpathfn> = local-name
+<xpathfn> = namespace-uri
+<xpathfn> = normalize-space
+<xpathfn> = not
+<xpathfn> = number
+<xpathfn> = position
+<xpathfn> = round
+<xpathfn> = starts-with
+<xpathfn> = string
+<xpathfn> = string-length
+<xpathfn> = substring
+<xpathfn> = substring-after
+<xpathfn> = substring-before
+<xpathfn> = sum
+<xpathfn> = system-property
+<xpathfn> = translate
+<xpathfn> = true
+<xpathfn> = unparsed-entity-url
+
+<xpathop> = and
+<xpathop> = or
+<xpathop> = +
+<xpathop> = -
+<xpathop> = *
+<xpathop> = div
+<xpathop> = mod
+<xpathop> = =
+<xpathop> = !=
+<xpathop> = <lt>
+<xpathop> = <gt>
+<xpathop> = <lt>=
+<xpathop> = <gt>=
+
