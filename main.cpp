@@ -160,7 +160,7 @@ Mutator* GrammarFuzzer::CreateMutator(int argc, char** argv, ThreadContext* tc) 
 
 Minimizer* GrammarFuzzer::CreateMinimizer(int argc, char** argv, ThreadContext* tc) {
   int minimization_limit = GetIntOption("-grammar_minimization_limit", argc, argv, 500);
-  return new GrammarMinimizer(&grammar, 500);
+  return new GrammarMinimizer(&grammar, minimization_limit);
 }
 
 bool GrammarFuzzer::OutputFilter(Sample* original_sample, Sample* output_sample, ThreadContext* tc) {
