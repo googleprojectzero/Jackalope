@@ -961,12 +961,20 @@ bool Fuzzer::MagicOutputFilter(Sample *original_sample, Sample *output_sample, c
   return true;
 }
 
-void Fuzzer::ReplaceTargetCmdArg(ThreadContext *tc, const char *search, const char *replace) {
+void Fuzzer::ReplaceTargetCmdArg(ThreadContext *tc, const std::string &search, const std::string &replace) {
   for (int i = 0; i < tc->target_argc; i++) {
-    if (strcmp(tc->target_argv[i], search) == 0) {
-      char* arg = (char*)malloc(strlen(replace) + 1);
-      strcpy(arg, replace);
-      tc->target_argv[i] = arg;
+    std::string arg(tc->target_argv[i]);
+    size_t pos = 0;
+    bool arg_modified = false;
+    while((pos = arg.find(search, pos)) != std::string::npos) {
+        arg.replace(pos, search.length(), replace);
+        pos += replace.length();
+        arg_modified = true;
+    }
+    if(arg_modified) {
+      char* arg_buf = (char*)malloc(arg.length() + 1);
+      strcpy(arg_buf, arg.c_str());
+      tc->target_argv[i] = arg_buf;
     }
   }
 }
@@ -1004,7 +1012,7 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
     }
 
     string outfile = DirJoin(delivery_dir, string("input_") + std::to_string(tc->thread_id) + extension);
-    ReplaceTargetCmdArg(tc, "@@", outfile.c_str());
+    ReplaceTargetCmdArg(tc, "@@", outfile);
 
     FileSampleDelivery* sampleDelivery = new FileSampleDelivery();
     sampleDelivery->Init(argc, argv);
@@ -1018,7 +1026,7 @@ SampleDelivery *Fuzzer::CreateSampleDelivery(int argc, char **argv, ThreadContex
 #else
     string shm_name = string("/shm_fuzz_") + std::to_string(getpid()) + "_" + std::to_string(tc->thread_id);
 #endif
-    ReplaceTargetCmdArg(tc, "@@", shm_name.c_str());
+    ReplaceTargetCmdArg(tc, "@@", shm_name);
 
     SHMSampleDelivery* sampleDelivery = new SHMSampleDelivery((char*)shm_name.c_str(), Sample::max_size + 4);
     sampleDelivery->Init(argc, argv);
@@ -1037,7 +1045,7 @@ RangeTracker* Fuzzer::CreateRangeTracker(int argc, char** argv, ThreadContext* t
 #else
     string shm_name = string("/shm_ranges_") + std::to_string(getpid()) + "_" + std::to_string(tc->thread_id);
 #endif
-    ReplaceTargetCmdArg(tc, "@@ranges", shm_name.c_str());
+    ReplaceTargetCmdArg(tc, "@ranges@", shm_name);
 
     return new SHMRangeTracker((char*)shm_name.c_str(), RANGE_SHM_SIZE);
   }

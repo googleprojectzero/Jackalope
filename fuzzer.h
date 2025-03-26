@@ -172,7 +172,7 @@ protected:
   
   virtual bool TrackHotOffsets() { return false; }
 
-  void ReplaceTargetCmdArg(ThreadContext *tc, const char *search, const char *replace);
+  void ReplaceTargetCmdArg(ThreadContext *tc, const std::string &search, const std::string &replace);
   
   bool MagicOutputFilter(Sample *original_sample, Sample *output_sample, const char *magic, size_t magic_size);
 
