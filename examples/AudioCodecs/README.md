@@ -16,7 +16,7 @@ CVE-2025-24163: Google Threat Analysis Group
 
 This directory contains an example that demonstrates how these issues were found. On macOS, most of the audio decoding goes through the AudioCodecs module, which then might load other decoders for a specific format. In order for the fuzzing to be as efficient as possible, after opening the file, the harness decodes all audio tracks. This is because tracks can use different encoders and often times interesting tracks (e.g. Apple Positional Audio Codec) are encoded at the end of the file.
 
-Since the audio API requires files to writen on disk with the proper extension (`-file_extension` needed), you need to create a RAM disk and write samples there using the following command for example.
+Since the audio API requires files to be written on disk with the proper extension (`-file_extension` needed), you need to create a RAM disk and write samples there using the following command for example.
 
 ``diskutil erasevolume HFS+ "RAMDisk" `hdiutil attach -nomount ram://524288` ``
 
