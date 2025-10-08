@@ -114,8 +114,11 @@ bool AppendMutator::Mutate(Sample *inout_sample, PRNG *prng, std::vector<Sample 
   }
   if (append <= 0) return true;
   size_t new_size = old_size + append;
-  inout_sample->bytes =
-    (char *)realloc(inout_sample->bytes, new_size);
+  char *new_bytes = (char *)realloc(inout_sample->bytes, new_size);
+  if (!new_bytes) {
+    FATAL("realloc failed in appendmutator");
+  }
+  inout_sample->bytes = new_bytes;
   inout_sample->size = new_size;
   for (size_t i = old_size; i < new_size; i++) {
     inout_sample->bytes[i] = (char)prng->Rand(0, 255);
@@ -592,3 +595,4 @@ void RepeatMutator::LoadGlobalState(FILE *fp) {
 
   HierarchicalMutator::LoadGlobalState(fp);
 }
+
