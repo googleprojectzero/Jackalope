@@ -156,8 +156,8 @@ xmlDocPtr loader(const xmlChar *URI, xmlDictPtr dict, int options, void *ctxt, x
   xmlDocPtr ret = NULL;
   switch (type) {
     case XSLT_LOAD_DOCUMENT:
-      idocs = (idocs + 1) % ndocs;
-      ret = parse_doc(docs[idocs], (char *)URI, NULL);
+      // idocs = (idocs + 1) % ndocs;
+      // ret = parse_doc(docs[idocs], (char *)URI, NULL);
       break;
     case XSLT_LOAD_STYLESHEET:
       itemplates = (itemplates + 1) % ntemplates;
@@ -301,6 +301,8 @@ int main(int argc, char **argv)
       printf("Error mapping shared memory\n");
     }
   }
+  
+  xsltInit();
 
   JACKALOPE_FUZZ_LOOP(fuzz(argv[2]))
   

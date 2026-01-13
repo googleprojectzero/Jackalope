@@ -255,6 +255,8 @@ protected:
   
   bool dump_coverage;
   
+  bool skip_initial_server_sync = false;
+  
   Mutex crash_mutex;
   std::unordered_map<std::string, int> unique_crashes;
   

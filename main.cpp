@@ -144,6 +144,7 @@ GrammarFuzzer::GrammarFuzzer(const char* grammar_file) {
   if (!grammar.Read(grammar_file)) {
     FATAL("Error reading grammar");
   }
+  skip_initial_server_sync = true;
 }
 
 Mutator* GrammarFuzzer::CreateMutator(int argc, char** argv, ThreadContext* tc) {

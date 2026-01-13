@@ -18,7 +18,7 @@ set(BUILD_SHARED_LIBS OFF)
 set(LIBXSLT_WITH_TESTS OFF)
 set(LIBXML2_WITH_TESTS OFF)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address,undefined -fno-sanitize=float-divide-by-zero,pointer-overflow -fno-sanitize-recover=all -fsanitize-coverage=trace-pc-guard")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address -fno-sanitize=float-divide-by-zero,pointer-overflow -fno-sanitize-recover=all -fsanitize-coverage=trace-pc-guard")
 
 add_subdirectory(libxml2)
 add_subdirectory(libxslt)

@@ -119,8 +119,8 @@
 <version> = 1.0
 <version> = 1.1
 
-<faketemplate> = <lt><xsltagname id=2> xsl:version="<version>" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" <xslattributes><gt><xsltrules><lt>/<xsltagname id=2><gt>
-<stylesheet> = <lt>xsl:stylesheet version="<version>" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" <xslattributes><gt><xsltrules><lt>/xsl:stylesheet<gt>
+<faketemplate> = <lt><xsltagname id=2> xsl:version="<version>" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:lxl="http://xmlsoft.org/XSLT/namespace" xmlns:xml="http://www.w3.org/XML/1998/namespace" <xslattributes><gt><xsltrules><lt>/<xsltagname id=2><gt>
+<stylesheet> = <lt>xsl:stylesheet version="<version>" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:lxl="http://xmlsoft.org/XSLT/namespace" xmlns:xml="http://www.w3.org/XML/1998/namespace" <xslattributes><gt><xsltrules><lt>/xsl:stylesheet<gt>
 
 <nsurl> = http://www.w3.org/1999/XSL/Transform
 <nsurl> = http://www.w3.org/url1
@@ -128,6 +128,7 @@
 <nsurl> = http://www.w3.org/url3
 
 <prefix> = xsl
+<prefix> = xml
 <prefix> = ns1
 <prefix> = ns2
 <prefix> = ns3
@@ -333,6 +334,7 @@
 <attrname> = att3
 <attrname> = att4
 <attrname> = att5
+<attrname> = xml:id
 
 <documenturi> = doc1.xml
 <documenturi> = doc2.xml
@@ -362,7 +364,8 @@
 <xpathelement> = [<xpath>]
 <xpathelement> = <axisspecifier>::
 <xpathelement> = <xpathfn>(<xpathargs>)
-<xpathelement> = document('<documenturi>')
+<xpathelement> = document('')
+<xpathelement> = lxl:node-set($<name>)
 <xpathelement> = key('<name>',<xpath>)
 <xpathelement> = <xpathop>
 
@@ -418,6 +421,7 @@
 <xpathfn> = translate
 <xpathfn> = true
 <xpathfn> = unparsed-entity-url
+<xpathfn> = lxl:node-set
 
 <xpathop> = and
 <xpathop> = or

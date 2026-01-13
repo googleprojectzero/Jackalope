@@ -38,7 +38,9 @@ void Fuzzer::PrintUsage() {
 }
 
 void Fuzzer::ParseOptions(int argc, char **argv) {
-  server_update_interval_ms = 5 * 60 * 1000;
+  int server_update_interval = GetIntOption("-server_update_interval", argc, argv, 5 * 60);
+  server_update_interval_ms = server_update_interval * 1000;
+
   acceptable_hang_ratio = 0.01;
   acceptable_crash_ratio = 0.02;
 
@@ -122,6 +124,8 @@ void Fuzzer::ParseOptions(int argc, char **argv) {
   add_all_inputs = GetBinaryOption("-add_all_inputs", argc, argv, false);
   
   dump_coverage = GetBinaryOption("-dump_coverage", argc, argv, false);
+  
+  skip_initial_server_sync = GetBinaryOption("-skip_initial_server_sync", argc, argv, skip_initial_server_sync);
 }
 
 void Fuzzer::SetupDirectories() {
@@ -602,13 +606,16 @@ void Fuzzer::SynchronizeAndGetJob(ThreadContext* tc, FuzzerJob* job) {
   if (state == INPUT_SAMPLE_PROCESSING) {
     if (input_files.empty() && !samples_pending) {
       if (server) {
-        server_mutex.Lock();
-        coverage_mutex.Lock();
-        server->ReportNewCoverage(&fuzzer_coverage, NULL);
-        coverage_mutex.Unlock();
+        if(!skip_initial_server_sync) {
+          server_mutex.Lock();
+          coverage_mutex.Lock();
+          server->ReportNewCoverage(&fuzzer_coverage, NULL);
+          coverage_mutex.Unlock();
+          last_server_update_time_ms = GetCurTime();
+          server->GetUpdates(server_samples, total_execs);
+          server_mutex.Unlock();
+        }
         last_server_update_time_ms = GetCurTime();
-        server->GetUpdates(server_samples, total_execs);
-        server_mutex.Unlock();
         state = SERVER_SAMPLE_PROCESSING;
       } else {
         state = FUZZING;
