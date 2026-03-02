@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION "3.1")
+cmake_minimum_required(VERSION "3.10")
 set (CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(TinyInst)
@@ -139,6 +139,13 @@ if(LINUX)
   target_compile_options(sancovtest PRIVATE "-fsanitize-coverage=trace-pc-guard")
   target_compile_options(sancovtest PRIVATE "-fsanitize=address")
   target_link_options(sancovtest PRIVATE "-fsanitize=address")
+endif()
+
+if(APPLE)
+  set_target_properties(fuzzer PROPERTIES
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/TinyInst/tinyinst.entitlements"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
+  )
 endif()
 
 add_subdirectory(examples)
