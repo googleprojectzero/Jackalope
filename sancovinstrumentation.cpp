@@ -78,7 +78,7 @@ void SanCovInstrumentation::Init(int argc, char **argv) {
   std::list<std::string> additional_env;
   additional_env.push_back(std::string("SAMPLE_SHM_ID=") + sample_shm_name);
   additional_env.push_back(std::string("COV_SHM_ID=") + coverage_shm_name);
-  additional_env.push_back(std::string("ASAN_OPTIONS=exitcode=") + std::to_string(ASAN_EXIT_STATUS) + ":log_path=" + asan_report_file);
+  additional_env.push_back(std::string("ASAN_OPTIONS=allocator_may_return_null=1:exitcode=") + std::to_string(ASAN_EXIT_STATUS) + ":log_path=" + asan_report_file);
 
   std::list<char *> env_options;
   GetOptionAll("-target_env", argc, argv, &env_options);
